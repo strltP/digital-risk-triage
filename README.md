@@ -5,6 +5,33 @@ It follows an investigation from intake and preliminary analysis to manual revie
 evidence attachment, case tracking, and structured reporting. All verdicts remain
 human decisions. The rule engine does **not** prove fraud or calculate probabilities.
 
+## Project Overview
+
+This project demonstrates the daily workflow of an entry-level Digital Risk
+Investigator: organize incoming observations, prioritize review, document evidence,
+exercise judgment, and communicate findings.
+
+| Investigator responsibility | How the project demonstrates it |
+| --- | --- |
+| Threat intake | Structured website, social-media, marketplace, and general phishing/abuse observations, with source URLs and UTC timestamps. |
+| Initial risk assessment | Passive URL inspection and explainable rules suggest a category and review priority without visiting suspicious sites. |
+| Evidence collection and organization | Manually uploaded screenshots retain their source, observation time, and SHA-256 hash alongside the case. |
+| Human investigation and escalation | Analyst notes, manual verdicts, false-positive examples, and validation before escalation show decisions beyond keyword matches. |
+| Case tracking | A filterable queue opens the selected case directly for review; SQLite preserves the investigation across restarts. |
+| Reporting | Dashboard counts and structured CSV/Excel exports communicate findings, decisions, and evidence references. |
+
+### Application screenshots
+
+Actual Streamlit captures from a local Chromium browser session, using isolated,
+fictional training data and reserved `.example` domains:
+
+![Filtered case queue with a direct Open selected case action](docs/screenshots/case-queue.png)
+
+![Investigator review of a simulated false-positive case](docs/screenshots/case-review.png)
+
+Also view [brandless intake and preliminary analysis](docs/screenshots/new-investigation.png)
+and the [dashboard and reports](docs/screenshots/dashboard-reports.png).
+
 ## Quick start on Windows
 
 Install **Python 3.11 or newer**, open PowerShell or Command Prompt, and run from
@@ -49,15 +76,19 @@ is disabled in `.streamlit/config.toml`.
 
 ## Investigator workflow
 
-1. **New Investigation**: choose the source, enter a protected brand, and provide
-   a URL or meaningful title/description (at least 10 letters/digits). An official
-   domain is optional. Select **Analyze observation** to see indicators, a suggested
+1. **New Investigation**: choose the source and provide a URL or meaningful
+   title/description (at least 10 letters/digits). Protected brand and official
+   domain are optional for general phishing or online abuse. Supply both to enable
+   brand-domain comparison; brand-specific text checks require the named brand
+   in the page title/description. Select **Analyze observation** to see indicators, a suggested
    threat category, review priority, plain-English reasoning, and URL parsing.
    Select **Save as new case** to persist the analyzed submission. Observation,
    creation, and update timestamps are recorded in UTC. If you edit the form,
    analyze it again; saving uses the explicitly displayed last analysis.
-2. **Case Queue**: filter by status, priority, category, or source. Find the case ID
-   and select it in **Case Review & Evidence**.
+2. **Case Queue**: filter by status, priority, category, or source. Choose a case in
+   **Case to review** and click **Open selected case** to go directly to its review.
+   **Back to Case Queue** restores the filters. You can also open **Case Review &
+   Evidence** from the sidebar and use its independent case picker as before.
 3. **Case Review & Evidence**: inspect the original observation and stored analysis.
    Enter investigator notes and a manual verdict. Save **Reviewing** while checking
    context. **Validated** requires **Confirmed violation** and supporting notes.
@@ -117,6 +148,8 @@ tests/                    Core tests and Streamlit widget workflow test
 .streamlit/config.toml    Dark native theme, upload cap, telemetry disabled
 data/                     Generated local database and evidence (Git-ignored)
 requirements.txt          Tested direct dependency versions
+.github/workflows/tests.yml Pytest on pushes and pull requests (Python 3.12)
+docs/screenshots/          Actual browser captures using fictional training data
 ```
 
 The UI calls the same validation/rule functions used by the tests. SQLite stores
@@ -135,15 +168,18 @@ queries prevent user text from becoming SQL. No models are trained or invoked.
 - `tldextract` uses its bundled Public Suffix List with fetching and caching disabled.
   For unrecognized suffixes (including `.example`), the displayed registered domain
   uses a best-effort last-two-label fallback. This is not a trust decision.
-- RapidFuzz compares the registrable name labels against the **explicitly configured**
-  official domain. Suffix similarity is excluded. An 80/100 similarity with both
+- With a protected brand name and an **explicitly configured** official domain,
+  RapidFuzz compares the registrable name labels. With either field missing,
+  brand comparison is skipped; a supplied official domain is still validated.
+  Suffix similarity is excluded. An 80/100 similarity with both
   names at least four characters long can flag an outside domain for review.
   An official-domain string embedded in an unrelated hostname is also flagged.
   Boundary-aware official-host matching accepts its subdomains, not substring tricks.
-- Page title/description rules look for credential requests, verification/suspension
-  language, payment urgency, affiliation claims, replica terms, and logo/trademark
-  misuse. Investigator notes are excluded from content analysis. Generic marketing
-  and HTTPS alone do not raise priority.
+- Page title/description rules always check for credential requests,
+  verification/suspension language, and payment urgency. Affiliation, replica,
+  and logo/trademark checks only run when a supplied brand name appears in that
+  content. Blank brand names never match arbitrary text. Investigator notes are
+  excluded from content analysis. Generic marketing and HTTPS alone do not raise priority.
 - High priority requires combined credential and verification/urgency signals on
   a host that does not match the configured official domain. Medium identifies
   specific remaining signals/combinations; otherwise priority is Low. These are
@@ -186,10 +222,14 @@ dashboard counts, safe CSV/XLSX exports, and 12 idempotent simulated demos.
 
 Actual verification on Linux with Python 3.12:
 
-- `python -m pytest -q`: **55 passed**, covering URL parsing/offline operation,
+- Baseline review: all **55 existing tests passed** before changes.
+- `python -m pytest -q`: **67 passed** after improvements, covering URL parsing/offline operation,
   conservative risk rules, persistence/filtering/review transitions, evidence
   validation/cleanup, formula-safe report round trips, demo idempotence, and a
   Streamlit widget workflow including a new session reading existing records.
+  Added checks cover optional-brand phishing/abuse intake, conditional brand rules,
+  persistence and CSV/Excel exports with a blank brand, opening a selected queue
+  case, retaining the selected case during review, and restoring queue filters.
 - `python -m pip check`: no broken requirements.
 - Streamlit server startup and a local HTTP health check succeeded.
 - Headless Chromium exercised real forms: intake → analysis → save → rejected
@@ -200,11 +240,21 @@ Actual verification on Linux with Python 3.12:
   stored bytes, MIME type and SHA-256 matched. Failed evidence submissions retain
   the investigator's entered timestamp; successful uploads reset the form.
 - Stopping/restarting the server preserved cases, review state, and evidence.
+- This improvement pass also exercised the running UI in Chromium: brandless
+  analysis/save, a filtered queue opening a different case from the latest saved
+  one, review of a simulated false positive, return navigation with retained
+  filters, brandless case details, and CSV/Excel downloads. The four screenshots
+  above were captured during that run. No page errors or external HTTP requests
+  occurred during it.
+- `.github/workflows/tests.yml` installs the existing requirements and runs
+  `python -m pytest -q` on pushes and pull requests. The same test command passed
+  locally; the GitHub-hosted workflow has not been executed as part of this change.
 
 The commands above use platform-specific virtual-environment paths. The application
 and commands were exercised on Linux; a Windows host was **not** available for a
-native Windows run. No app publication, remote push, live suspicious-URL request,
-or environment-configuration publication was performed.
+native Windows run. Earlier browser/evidence/restart checks are recorded above;
+this improvement pass did not repeat the evidence-upload or server-restart scenario.
+This change was not pushed or deployed. No live suspicious-URL requests were made.
 
 ## Known limitations
 

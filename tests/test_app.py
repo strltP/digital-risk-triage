@@ -4,6 +4,7 @@ from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
 from core.database import Database
+from core.models import Intake
 
 APP = Path(__file__).resolve().parents[1] / 'app.py'
 
@@ -18,7 +19,7 @@ def test_investigator_workflow(monkeypatch, tmp_path):
     assert not app.exception
     labeled(app.button, 'Analyze observation').click().run()
     assert app.error  # Invalid empty intake is handled visibly.
-    labeled(app.text_input, 'Protected brand name').set_value('Astervale')
+    labeled(app.text_input, 'Protected brand name (optional)').set_value('Astervale')
     labeled(app.text_input, 'Suspicious URL').set_value('https://astervale-security.example/login')
     labeled(app.text_input, 'Official brand domain (optional)').set_value('astervale.example')
     labeled(app.text_area, 'Description or suspicious content').set_value('Verify your account. Enter your password within 2 hours.')
@@ -76,3 +77,62 @@ def test_investigator_workflow(monkeypatch, tmp_path):
     for section in ('New Investigation', 'Case Queue', 'Case Review & Evidence', 'Dashboard & Reports'):
         restarted.radio[0].set_value(section).run()
         assert not restarted.exception
+
+
+def test_queue_opens_selected_case_and_restores_filters(monkeypatch, tmp_path):
+    monkeypatch.setenv('DRT_DATA_DIR', str(tmp_path))
+    db = Database(tmp_path / 'cases.sqlite3')
+    older = db.create_case(Intake('Website', 'https://older.example', 'Astervale', title='Older case'))
+    newer = db.create_case(Intake('Other', brand='', description='Reported online abuse to review.'))
+    db.update_review(older, notes='Initial investigation', status='Reviewing', verdict='Inconclusive')
+    app = AppTest.from_file(str(APP), default_timeout=20).run()
+    app.radio[0].set_value('Case Review & Evidence').run()
+    assert labeled(app.selectbox, 'Select case').value == newer
+    app.radio[0].set_value('Case Queue').run()
+    labeled(app.selectbox, 'Status filter').set_value('Reviewing')
+    labeled(app.selectbox, 'Priority filter').set_value('Low')
+    labeled(app.selectbox, 'Source filter').set_value('Website').run()
+    assert labeled(app.selectbox, 'Case to review').options == [f'{older} · Older case · Reviewing']
+    labeled(app.button, 'Open selected case').click().run()
+    assert not app.exception
+    assert app.radio[0].value == 'Case Review & Evidence'
+    assert labeled(app.selectbox, 'Select case').value == older
+    # Save a review: reruns must stay on the case opened from the queue.
+    labeled(app.text_area, 'Investigator notes').set_value('Continued investigation')
+    labeled(app.button, 'Save review').click().run()
+    assert not app.exception
+    assert labeled(app.selectbox, 'Select case').value == older
+    assert db.get_case(older)['notes'] == 'Continued investigation'
+    labeled(app.button, 'Back to Case Queue').click().run()
+    assert not app.exception
+    assert app.radio[0].value == 'Case Queue'
+    assert labeled(app.selectbox, 'Status filter').value == 'Reviewing'
+    assert labeled(app.selectbox, 'Priority filter').value == 'Low'
+    assert labeled(app.selectbox, 'Source filter').value == 'Website'
+    labeled(app.selectbox, 'Status filter').set_value('False Positive').run()
+    assert not app.dataframe
+    assert not any(button.label == 'Open selected case' for button in app.button)
+    # The original independent case picker still works.
+    app.radio[0].set_value('Case Review & Evidence').run()
+    labeled(app.selectbox, 'Select case').set_value(newer).run()
+    assert labeled(app.selectbox, 'Select case').value == newer
+    assert not app.exception
+
+
+def test_brandless_intake_save_and_open(monkeypatch, tmp_path):
+    monkeypatch.setenv('DRT_DATA_DIR', str(tmp_path))
+    app = AppTest.from_file(str(APP), default_timeout=20).run()
+    labeled(app.text_input, 'Suspicious URL').set_value('https://account-alert.example/login')
+    labeled(app.text_area, 'Description or suspicious content').set_value('Verify your account. Enter your password within 2 hours.')
+    labeled(app.button, 'Analyze observation').click().run()
+    assert not app.error
+    assert any('High is a review priority' in info.value for info in app.info)
+    labeled(app.button, 'Save as new case').click().run()
+    cases = Database(tmp_path / 'cases.sqlite3').list_cases()
+    assert len(cases) == 1
+    assert cases[0]['brand'] == ''
+    assert cases[0]['category'] == 'Potential phishing'
+    app.radio[0].set_value('Case Queue').run()
+    labeled(app.button, 'Open selected case').click().run()
+    assert labeled(app.selectbox, 'Select case').value == cases[0]['case_id']
+    assert not app.exception

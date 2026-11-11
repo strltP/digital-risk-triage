@@ -27,6 +27,16 @@ def flash(message: str):
     st.session_state["flash"] = message
 
 
+def open_case():
+    """Run as a button callback, before the next sidebar widget is rendered."""
+    st.session_state["case_to_open"] = st.session_state["queue_case"]
+    st.session_state["workspace"] = "Case Review & Evidence"
+
+
+def back_to_queue():
+    st.session_state["workspace"] = "Case Queue"
+
+
 def assessment_view(result: Assessment):
     st.subheader("Preliminary assessment")
     left, right = st.columns([3, 1])
@@ -50,7 +60,7 @@ def case_table(cases: list[dict]):
         st.info("No cases match these filters.")
         return
     rows = [{"Case ID": c["case_id"], "Data": "SIMULATED" if c["is_demo"] else "Intake",
-             "Brand": c["brand"], "Title": c["title"], "Category": c["category"],
+             "Brand": c["brand"] or "Not supplied", "Title": c["title"], "Category": c["category"],
              "Priority": f"{PRIORITY_SYMBOL[c['priority']]} {c['priority']}",
              "Status": c["status"], "Observed (UTC)": c["observed_at"]} for c in cases]
     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
@@ -58,12 +68,35 @@ def case_table(cases: list[dict]):
 
 def filtered_cases(db: Database, key: str) -> list[dict]:
     columns = st.columns(4)
-    status = columns[0].selectbox("Status filter", ("All",) + STATUSES, key=key + "_status")
-    priority = columns[1].selectbox("Priority filter", ("All",) + PRIORITIES, key=key + "_priority")
-    category = columns[2].selectbox("Category filter", ("All",) + CATEGORIES, key=key + "_category")
-    source = columns[3].selectbox("Source filter", ("All",) + SOURCES, key=key + "_source")
-    return db.list_cases(status=None if status == "All" else status, priority=None if priority == "All" else priority,
-                         category=None if category == "All" else category, source_type=None if source == "All" else source)
+    saved = st.session_state.setdefault("saved_filters", {})
+    filters = {}
+    for column, (field, label, choices) in zip(columns, (
+        ("status", "Status filter", STATUSES), ("priority", "Priority filter", PRIORITIES),
+        ("category", "Category filter", CATEGORIES), ("source_type", "Source filter", SOURCES),
+    )):
+        widget_key = f"{key}_{field}"
+        if widget_key not in st.session_state:
+            st.session_state[widget_key] = saved.get(widget_key, "All")
+        value = column.selectbox(label, ("All",) + choices, key=widget_key)
+        # Widget state is removed by Streamlit while another section is open.
+        saved[widget_key] = value
+        filters[field] = None if value == "All" else value
+    return db.list_cases(**filters)
+
+
+def case_queue(db: Database):
+    st.header("Case Queue")
+    st.caption("Filter the queue, choose a case, and open it directly for review.")
+    cases = filtered_cases(db, "queue")
+    st.write(f"{len(cases)} case(s)")
+    case_table(cases)
+    if cases:
+        lookup = {case["case_id"]: case for case in cases}
+        st.selectbox(
+            "Case to review", list(lookup), key="queue_case",
+            format_func=lambda cid: f"{cid} · {lookup[cid]['title'][:80] or 'Untitled observation'} · {lookup[cid]['status']}",
+        )
+        st.button("Open selected case", type="primary", on_click=open_case)
 
 
 def new_investigation(db: Database):
@@ -72,9 +105,10 @@ def new_investigation(db: Database):
     with st.form("intake"):
         left, right = st.columns(2)
         source = left.selectbox("Source type", SOURCES)
-        brand = right.text_input("Protected brand name", max_chars=200)
+        brand = right.text_input("Protected brand name (optional)", max_chars=200)
         url = st.text_input("Suspicious URL", placeholder="https://suspicious.example/page", max_chars=4096)
         official = st.text_input("Official brand domain (optional)", placeholder="brand.example", max_chars=253)
+        st.caption("Leave brand fields blank for general phishing or online abuse. Domain comparison needs both a brand name and official domain; other brand checks need the named brand in the page content.")
         title = st.text_input("Listing/page title", max_chars=500)
         description = st.text_area("Description or suspicious content", max_chars=20000)
         notes = st.text_area("Initial investigator notes (optional)", max_chars=20000)
@@ -112,8 +146,14 @@ def case_review(db: Database):
         return
     lookup = {case["case_id"]: case for case in cases}
     ids = list(lookup)
-    preferred = st.session_state.get("last_case_id", ids[0])
-    selected = st.selectbox("Select case", ids, index=ids.index(preferred) if preferred in ids else 0,
+    requested = st.session_state.pop("case_to_open", None)
+    if requested in ids:
+        st.session_state["review_case"] = requested
+    elif st.session_state.get("review_case") not in ids:
+        preferred = st.session_state.get("last_case_id", ids[0])
+        st.session_state["review_case"] = preferred if preferred in ids else ids[0]
+    st.button("Back to Case Queue", on_click=back_to_queue)
+    selected = st.selectbox("Select case", ids, key="review_case",
                             format_func=lambda cid: f"{'[SIMULATED] ' if lookup[cid]['is_demo'] else ''}{cid} · {lookup[cid]['status']}")
     case = lookup[selected]
     if case["is_demo"]:
@@ -124,7 +164,7 @@ def case_review(db: Database):
     right.metric("Manual verdict", case["verdict"])
     st.subheader("Observation")
     st.text(case["title"] or "Untitled observation")
-    st.text(f"Source: {case['source_type']} | Brand: {case['brand']}")
+    st.text(f"Source: {case['source_type']} | Brand: {case['brand'] or 'Not supplied (general investigation)'}")
     st.text(f"Source URL: {case['source_url'] or 'Not supplied'}")
     st.text(f"Official domain: {case['official_domain'] or 'Not configured'}")
     st.text(f"Observed: {case['observed_at']} | Created: {case['created_at']} | Updated: {case['updated_at']}")
@@ -228,7 +268,7 @@ def main():
     st.title("Digital Risk Investigation")
     st.caption("INVESTIGATION DESK · Local case triage · Human judgment at every decision")
     st.sidebar.title("Investigation desk")
-    section = st.sidebar.radio("Workspace", SECTIONS)
+    section = st.sidebar.radio("Workspace", SECTIONS, key="workspace")
     st.sidebar.info("Passive analysis only. No URL visits, scraping, live lookups, or automated violation verdicts.")
     st.sidebar.caption("Demo data is fictional and uses reserved .example domains.")
     try:
@@ -242,11 +282,7 @@ def main():
         if section == "New Investigation":
             new_investigation(db)
         elif section == "Case Queue":
-            st.header("Case Queue")
-            st.caption("Filter the queue, then open Case Review & Evidence and select a case by its ID.")
-            cases = filtered_cases(db, "queue")
-            st.write(f"{len(cases)} case(s)")
-            case_table(cases)
+            case_queue(db)
         elif section == "Case Review & Evidence":
             case_review(db)
         else:

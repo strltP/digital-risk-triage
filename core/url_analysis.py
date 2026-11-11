@@ -73,7 +73,7 @@ def registered_domain(host: str) -> str:
         return result.top_domain_under_public_suffix or ".".join(host.split(".")[-2:])
 
 
-def analyze_url(value: str, official: str = "") -> URLAnalysis:
+def analyze_url(value: str, official: str = "", *, compare_official: bool = True) -> URLAnalysis:
     normalized, host = normalize_url(value)
     result = URLAnalysis(normalized_url=normalized, hostname=host)
     if official.strip():
@@ -103,7 +103,7 @@ def analyze_url(value: str, official: str = "") -> URLAnalysis:
         result.indicators.append("URL is unusually long (over 200 characters).")
     if re.search(r"https?://", unquote(parts.path + "?" + parts.query), re.I):
         result.indicators.append("URL embeds another URL in its path or query; inspect the destination manually.")
-    if result.official_domain:
+    if result.official_domain and compare_official:
         official_registered = registered_domain(result.official_domain)
         result.matches_official = host == result.official_domain or host.endswith("." + result.official_domain)
         # Shared suffixes (especially .example) must not make unrelated short
@@ -121,4 +121,6 @@ def analyze_url(value: str, official: str = "") -> URLAnalysis:
             result.indicators.append("Domain resembles the configured official domain but is outside it.")
         if not result.matches_official and result.official_domain in host:
             result.indicators.append("Official domain text appears inside a different hostname (possible deceptive placement).")
+    elif result.official_domain:
+        result.comparison = "Official domain recorded. Brand comparison was skipped because no protected brand name was supplied."
     return result

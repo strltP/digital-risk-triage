@@ -65,3 +65,21 @@ def test_empty_and_filtered_reports(db):
     rows = list(csv.DictReader(StringIO(export_csv(db, db.list_cases(status='False Positive')).decode('utf-8-sig'))))
     assert len(rows) == 3
     assert all(row['data_label'] == 'SIMULATED DEMO' for row in rows)
+
+
+def test_unbranded_case_persists_review_and_exports(db):
+    case_id = db.create_case(Intake('Website', 'https://account-alert.example',
+                                    description='Verify your account. Enter your password within 2 hours.'))
+    db.update_review(case_id, notes='General phishing investigation', status='Reviewing', verdict='Inconclusive')
+    restarted = Database(db.path)
+    assert restarted.get_case(case_id)['brand'] == ''
+    rows = list(csv.DictReader(StringIO(export_csv(restarted).decode('utf-8-sig'))))
+    assert rows[0]['brand'] == ''
+    assert rows[0]['category'] == 'Potential phishing'
+    assert rows[0]['status'] == 'Reviewing'
+    book = load_workbook(BytesIO(export_excel(restarted)))
+    headers = [cell.value for cell in book['Cases'][1]]
+    values = dict(zip(headers, [cell.value for cell in book['Cases'][2]]))
+    assert values['case_id'] == case_id
+    assert values['brand'] is None
+    assert values['priority'] == 'High'

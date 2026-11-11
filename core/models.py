@@ -45,8 +45,8 @@ class Intake:
         cleaned = Intake(**values)
         if cleaned.source_type not in SOURCES:
             raise ValueError("Choose a supported source type.")
-        if len(cleaned.brand) < 2:
-            raise ValueError("Enter a protected brand name of at least two characters.")
+        if cleaned.brand and len(cleaned.brand) < 2:
+            raise ValueError("Leave the protected brand blank or enter at least two characters.")
         if not cleaned.url and sum(c.isalnum() for c in cleaned.title + cleaned.description) < 10:
             raise ValueError("Provide a URL or meaningful title/description (at least 10 letters or digits).")
         for key, value in values.items():
