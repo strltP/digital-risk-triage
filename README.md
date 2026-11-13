@@ -100,6 +100,27 @@ Existing records are skipped, including their notes, verdicts, titles, timestamp
 and evidence. Legacy `[SIMULATED]` title prefixes are hidden only in the UI; stored
 records and exported intake text remain intact. Manual investigations are retained.
 
+Sample content lives in **`datasets/sample_cases.json`**, separate from application
+logic so scenarios and fictional review metadata can be inspected without editing
+Python. The versioned JSON contains the same 100 records, with their original keys,
+inputs, notes, statuses and intended manual verdicts.
+
+**`core/dataset_loader.py`** resolves the file relative to the project directory,
+independently of the terminal's working directory. Before inserting anything, it
+validates the entire file: structure/version, required string fields, unique keys,
+supported fictional brand/domain pairs, reserved `.example` URLs, sample
+status/verdict pairs and supporting review notes. Existing `Intake` and URL
+validation are reused. Missing files and invalid records produce readable errors
+without resetting SQLite or silently skipping bad records.
+
+The loader sends missing records through `Database.create_case()`, which runs the
+existing rule engine. Category and priority are not JSON inputs. Fictional review
+outcomes use `Database.update_review()`, including validation before escalation.
+Existing sample keys are skipped, so manual and sample investigations coexist in
+the same SQLite database without overwriting notes, verdicts, evidence or timestamps.
+`core/demo.py` retains `load_demo()` as a small compatibility wrapper; Python fixture
+lists have been removed. The JSON is tracked in Git; runtime `data/` remains ignored.
+
 All scenarios use four fictional brands—Astervale, Lumifern, Velora Works and
 Northpetal—and reserved `.example` domains. Sample review notes and completed
 verdicts describe **fictional investigation outcomes**. No screenshots are seeded
@@ -182,8 +203,9 @@ core/risk_rules.py           Explainable preliminary category and priority
 core/database.py             SQLite persistence and review transition validation
 core/evidence.py             Image validation, storage and SHA-256 metadata
 core/reporting.py            Formula-safe CSV and Excel reports
-core/demo.py                 Idempotent loader and original scenario compatibility
-core/sample_scenarios.py     Structured additional fixtures and fictional review notes
+core/dataset_loader.py       JSON validation and idempotent sample seeding
+core/demo.py                 Backward-compatible load_demo() wrapper
+datasets/sample_cases.json   All 100 unchanged sample inputs and fictional reviews
 tests/                       Core, dataset migration, export and UI workflow tests
 .streamlit/config.toml       Dark theme, upload cap and telemetry settings
 ```
@@ -192,17 +214,22 @@ tests/                       Core, dataset migration, export and UI workflow tes
 
 Executed on Linux with Python 3.12:
 
-- Existing baseline: **67 tests passed**.
-- Updated `python -m pytest -q`: **73 passed**, covering fresh/repeated loading,
+- Pre-refactor baseline: **73 tests passed**.
+- Updated `python -m pytest -q`: **116 passed**, covering fresh/repeated loading,
   upgrade from the original 12, record/evidence preservation, review transitions,
-  reserved domains, actual rule outputs, export provenance and UI presentation.
+  JSON structure/field errors, duplicate keys, missing/malformed files, working
+  directory independence, reserved domains, actual rule outputs, export provenance
+  and UI presentation. Invalid records are rejected before any case is inserted.
   Existing URL, evidence hashing/validation and spreadsheet formula tests also pass.
+- Compared all 100 JSON records and imported case contents against the original
+  Python fixtures: inputs, stable keys, notes, statuses, verdicts and computed
+  assessments match exactly. A regression checksum protects the extracted content.
 - `python -m pip check`: no broken requirements.
 - Streamlit startup and local HTTP health check succeeded using isolated data.
 - Chromium exercised sample loading twice, queue filters, direct review navigation,
   return navigation with retained filters, sample labels, dashboard metrics/chart,
   and CSV/Excel downloads. No page errors or external HTTP requests occurred.
-  The screenshots above were refreshed from that running application.
+  Existing screenshots above remain representative; the UI was not redesigned.
 
 A native Windows run and GitHub-hosted CI were not executed in this environment.
 Evidence uploads were covered by automated tests; this pass did not repeat manual

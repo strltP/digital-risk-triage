@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from core.database import Database
-from core.demo import load_demo
+from core.dataset_loader import DatasetError, load_sample_dataset
 from core.evidence import evidence_path, save_evidence
 from core.models import CATEGORIES, Intake, PRELIMINARY_NOTICE, PRIORITIES, SOURCES, STATUSES, VERDICTS
 from core.reporting import export_csv, export_excel
@@ -299,9 +299,13 @@ def main():
         with st.sidebar.container(border=True):
             st.caption("Sample Data · 100 fictional investigations using .example domains. Review outcomes are fictional.")
             if st.button("Load Sample Dataset", width="stretch"):
-                inserted = load_demo(db)
-                flash(f"Added {inserted} new sample cases. Existing investigations were preserved.")
-                st.rerun()
+                try:
+                    inserted = load_sample_dataset(db)
+                except DatasetError as exc:
+                    st.error(str(exc))
+                else:
+                    flash(f"Added {inserted} new sample cases. Existing investigations were preserved.")
+                    st.rerun()
         if message := st.session_state.pop("flash", None):
             st.success(message)
         if section == "New Investigation":

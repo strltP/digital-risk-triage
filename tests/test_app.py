@@ -173,3 +173,21 @@ def test_sample_presentation_preserves_legacy_and_manual_titles(monkeypatch, tmp
     assert [metric.value for metric in app.metric] == ['101', '67', '21', '13']
     assert any('100 Sample Data' in caption.value and '1 Investigator intake' in caption.value
                for caption in app.caption)
+
+
+def test_sample_dataset_error_is_visible_without_changing_cases(monkeypatch, tmp_path):
+    from core import dataset_loader
+
+    monkeypatch.setenv('DRT_DATA_DIR', str(tmp_path))
+    monkeypatch.setattr(dataset_loader, 'DEFAULT_DATASET', tmp_path / 'missing-samples.json')
+    db = Database(tmp_path / 'cases.sqlite3')
+    db.create_case(Intake('Other', title='Existing investigator observation', notes='Preserve my notes'))
+    before = db.list_cases()
+    app = AppTest.from_file(str(APP), default_timeout=20).run()
+    labeled(app.button, 'Load Sample Dataset').click().run()
+    assert not app.exception
+    assert any('Sample dataset not found' in error.value for error in app.error)
+    assert db.list_cases() == before
+    app.radio[0].set_value('Case Queue').run()
+    assert not app.exception
+    assert len(app.dataframe[0].value) == 1
