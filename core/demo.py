@@ -1,9 +1,9 @@
-"""Twelve fictional scenarios on reserved .example domains; never evidence."""
+"""Idempotent 100-case sample dataset, compatible with the original 12 keys."""
 from core.database import Database
-from core.models import Intake
+from core.sample_scenarios import ADDITIONAL_SCENARIOS, Scenario
 
 # source, URL, brand, official domain, title, content, simulated disposition
-SCENARIOS = [
+LEGACY_SCENARIOS = [
     ("Website", "https://astervale-security.example/login", "Astervale", "astervale.example",
      "Account alert", "Verify your account. Enter your password within 2 hours.", None),
     ("Social Media", "https://social.example/lumifern-help", "Lumifern", "lumifern.example",
@@ -22,32 +22,43 @@ SCENARIOS = [
      "Print sample", "Northpetal unauthorized trademark on printed goods, reported by submitter.", None),
     ("Website", "https://astervale.example/login", "Astervale", "astervale.example",
      "Normal official login", "Verify your account. Enter your password on the usual sign-in page.",
-     "SIMULATED REVIEW: official login verified against fictional internal records. Credential language alone is not a violation."),
+     "Official login matches fictional internal records. Credential language alone is not a violation."),
     ("Marketplace", "https://market.example/safety-guide", "Velora Works", "veloraworks.example",
      "Counterfeit awareness guide", "How to recognize a Velora Works replica or counterfeit bag. Educational warning.",
-     "SIMULATED REVIEW: educational warning, not a sale. Keyword rules lack context; no violation found."),
+     "Educational warning, not a sale. Keyword rules lack context; no violation found."),
     ("Website", "https://astervale-outlet.example", "Astervale", "astervale.example",
      "Authorized outlet", "Astervale official outlet. Dealer authorization provided for review.",
-     "SIMULATED REVIEW: fictional brand owner confirmed dealer authorization. A similar domain and affiliation claim were not proof."),
+     "The exercise includes dealer authorization. A similar domain and affiliation claim were not proof."),
     ("Website", "https://lumifern.example/products", "Lumifern", "lumifern.example",
      "Seasonal catalogue", "Great deals on Lumifern quality products. Seasonal catalogue.", None),
 ]
 
+SCENARIOS = tuple(
+    Scenario(
+        f"demo-v1-{index:02d}", source, url, brand, title, content,
+        status="False Positive" if disposition else "Reviewing" if index == 4 else "New",
+        review_notes=disposition or ("Checking claimed authorization; no verdict yet." if index == 4 else ""),
+    )
+    for index, (source, url, brand, _official, title, content, disposition) in enumerate(LEGACY_SCENARIOS, 1)
+) + ADDITIONAL_SCENARIOS
+
 
 def load_demo(db: Database) -> int:
+    """Insert only missing stable keys; never update an existing investigation.
+
+    Reviews use the public validation path, including validation before escalation.
+    The returned count reports new records, not the total size of the dataset.
+    """
     inserted = 0
-    for index, (source, url, brand, official, title, content, disposition) in enumerate(SCENARIOS, 1):
-        key = f"demo-v1-{index:02d}"
+    for scenario in SCENARIOS:
         with db.connection() as conn:
-            if conn.execute("SELECT 1 FROM cases WHERE demo_key=?", (key,)).fetchone():
+            if conn.execute("SELECT 1 FROM cases WHERE demo_key=?", (scenario.key,)).fetchone():
                 continue  # Preserve any subsequent investigator edits.
-        case_id = db.create_case(Intake(source, url, brand, official,
-                                       "[SIMULATED] " + title, content,
-                                       "SIMULATED DEMO — fictional scenario; no real evidence or allegation."), demo_key=key)
-        if disposition:
-            db.update_review(case_id, notes=disposition, status="False Positive", verdict="No violation found")
-        elif index == 4:
-            db.update_review(case_id, notes="SIMULATED DEMO — checking claimed authorization; no verdict yet.",
-                             status="Reviewing", verdict="Inconclusive")
+        intake = scenario.intake()
+        case_id = db.create_case(intake, demo_key=scenario.key)
+        if scenario.status == "Escalated":
+            db.update_review(case_id, notes=intake.notes, status="Validated", verdict=scenario.verdict)
+        if scenario.status != "New":
+            db.update_review(case_id, notes=intake.notes, status=scenario.status, verdict=scenario.verdict)
         inserted += 1
     return inserted

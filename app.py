@@ -37,6 +37,20 @@ def back_to_queue():
     st.session_state["workspace"] = "Case Queue"
 
 
+def display_title(case: dict) -> str:
+    """Clean legacy sample titles for display without editing saved records."""
+    title = case["title"]
+    if case["is_demo"]:
+        title = title.removeprefix("[SIMULATED]").lstrip()
+    return title or "Untitled observation"
+
+
+def case_option(case: dict) -> str:
+    provenance = "Sample Data" if case["is_demo"] else "Investigator intake"
+    return (f"{display_title(case)[:80]} · {PRIORITY_SYMBOL[case['priority']]} {case['priority']}"
+            f" · {case['status']} · {provenance} · {case['case_id'][:12]}")
+
+
 def assessment_view(result: Assessment):
     st.subheader("Preliminary assessment")
     left, right = st.columns([3, 1])
@@ -59,11 +73,11 @@ def case_table(cases: list[dict]):
     if not cases:
         st.info("No cases match these filters.")
         return
-    rows = [{"Case ID": c["case_id"], "Data": "SIMULATED" if c["is_demo"] else "Intake",
-             "Brand": c["brand"] or "Not supplied", "Title": c["title"], "Category": c["category"],
+    rows = [{"Title": display_title(c), "Data": "Sample Data" if c["is_demo"] else "Investigator intake",
+             "Brand": c["brand"] or "Not supplied", "Source": c["source_type"], "Category": c["category"],
              "Priority": f"{PRIORITY_SYMBOL[c['priority']]} {c['priority']}",
-             "Status": c["status"], "Observed (UTC)": c["observed_at"]} for c in cases]
-    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+             "Status": c["status"], "Observed (UTC)": c["observed_at"], "Case ID": c["case_id"]} for c in cases]
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch", height=min(480, 38 + len(rows) * 35))
 
 
 def filtered_cases(db: Database, key: str) -> list[dict]:
@@ -88,13 +102,13 @@ def case_queue(db: Database):
     st.header("Case Queue")
     st.caption("Filter the queue, choose a case, and open it directly for review.")
     cases = filtered_cases(db, "queue")
-    st.write(f"{len(cases)} case(s)")
+    st.caption(f"{len(cases):,} cases in view")
     case_table(cases)
     if cases:
         lookup = {case["case_id"]: case for case in cases}
         st.selectbox(
             "Case to review", list(lookup), key="queue_case",
-            format_func=lambda cid: f"{cid} · {lookup[cid]['title'][:80] or 'Untitled observation'} · {lookup[cid]['status']}",
+            format_func=lambda cid: case_option(lookup[cid]),
         )
         st.button("Open selected case", type="primary", on_click=open_case)
 
@@ -142,7 +156,7 @@ def case_review(db: Database):
     st.header("Case Review & Evidence")
     cases = db.list_cases()
     if not cases:
-        st.info("Create an investigation or load simulated demo cases to begin review.")
+        st.info("Create an investigation or load the sample dataset to begin review.")
         return
     lookup = {case["case_id"]: case for case in cases}
     ids = list(lookup)
@@ -154,16 +168,17 @@ def case_review(db: Database):
         st.session_state["review_case"] = preferred if preferred in ids else ids[0]
     st.button("Back to Case Queue", on_click=back_to_queue)
     selected = st.selectbox("Select case", ids, key="review_case",
-                            format_func=lambda cid: f"{'[SIMULATED] ' if lookup[cid]['is_demo'] else ''}{cid} · {lookup[cid]['status']}")
+                            format_func=lambda cid: case_option(lookup[cid]))
     case = lookup[selected]
-    if case["is_demo"]:
-        st.warning("SIMULATED DEMO: fictional brand and scenario. No real allegation or automatically collected evidence.")
+    st.caption("Sample Investigation · Fictional scenario and review outcomes" if case["is_demo"]
+               else "Investigator intake")
+    st.caption(f"Case ID: {case['case_id']}")
     left, middle, right = st.columns(3)
     left.metric("Review status", case["status"])
     middle.metric("Preliminary priority", f"{PRIORITY_SYMBOL[case['priority']]} {case['priority']}")
     right.metric("Manual verdict", case["verdict"])
     st.subheader("Observation")
-    st.text(case["title"] or "Untitled observation")
+    st.text(display_title(case))
     st.text(f"Source: {case['source_type']} | Brand: {case['brand'] or 'Not supplied (general investigation)'}")
     st.text(f"Source URL: {case['source_url'] or 'Not supplied'}")
     st.text(f"Official domain: {case['official_domain'] or 'Not configured'}")
@@ -178,7 +193,7 @@ def case_review(db: Database):
         st.json(case["url_analysis"])
 
     st.subheader("Investigator review")
-    st.caption("Validation requires a human Confirmed violation verdict and supporting notes. Save Validated first, then save Escalated. False Positive requires No violation found and notes.")
+    st.caption("Use supporting notes for a final verdict. Validate before escalating; mark cleared cases False Positive with a No violation found verdict.")
     with st.form("review_" + selected):
         notes = st.text_area("Investigator notes", value=case["notes"], max_chars=20000, key="notes_" + selected)
         left, right = st.columns(2)
@@ -217,7 +232,7 @@ def case_review(db: Database):
                 st.error(str(exc))
     items = db.list_evidence(selected)
     if not items:
-        st.info("No screenshots attached. The application never captures screenshots automatically.")
+        st.caption("No screenshots attached.")
     for number, item in enumerate(items, 1):
         with st.expander(f"Screenshot {number} · observed {item['observed_at']}", expanded=True):
             st.text(item["original_name"])
@@ -244,11 +259,20 @@ def dashboard(db: Database):
     metrics[1].metric("Awaiting review", sum(c["status"] in ("New", "Reviewing") for c in cases))
     metrics[2].metric("Validated cases", sum(c["status"] in ("Validated", "Escalated") for c in cases))
     metrics[3].metric("False positives", sum(c["status"] == "False Positive" for c in cases))
-    st.caption("Validated count includes escalated cases. Totals include simulated demos, which are labeled in reports.")
+    sample_count = sum(c["is_demo"] for c in cases)
+    st.caption(f"{sample_count:,} Sample Data · {len(cases) - sample_count:,} Investigator intake · Validated includes escalated cases.")
     if cases:
         st.subheader("Cases by preliminary threat category")
-        counts = pd.Series([c["category"] for c in cases]).value_counts().rename("Cases")
-        st.dataframe(counts.rename_axis("Threat category").reset_index(), hide_index=True, width="stretch")
+        counts = pd.Series([c["category"] for c in cases]).value_counts().reindex(CATEGORIES, fill_value=0).rename("Cases")
+        st.vega_lite_chart(counts.rename_axis("Threat category").reset_index(), {
+            "mark": {"type": "bar", "color": "#53c7b5"},
+            "encoding": {
+                "x": {"field": "Cases", "type": "quantitative", "axis": {"tickMinStep": 1}},
+                "y": {"field": "Threat category", "type": "nominal", "sort": list(CATEGORIES),
+                      "axis": {"labelLimit": 280}},
+                "tooltip": [{"field": "Threat category"}, {"field": "Cases"}],
+            },
+        }, width="stretch", height=260)
     st.subheader("Export cases")
     st.caption("Exports use the filters below and include analyst notes, verdicts, UTC timestamps and evidence references. Excel also includes an Evidence sheet. Image files remain in the local evidence directory.")
     filtered = filtered_cases(db, "reports")
@@ -269,14 +293,15 @@ def main():
     st.caption("INVESTIGATION DESK · Local case triage · Human judgment at every decision")
     st.sidebar.title("Investigation desk")
     section = st.sidebar.radio("Workspace", SECTIONS, key="workspace")
-    st.sidebar.info("Passive analysis only. No URL visits, scraping, live lookups, or automated violation verdicts.")
-    st.sidebar.caption("Demo data is fictional and uses reserved .example domains.")
+    st.sidebar.caption("Offline URL analysis · Investigator-led review")
     try:
         db = Database(DATA / "cases.sqlite3")
-        if st.sidebar.button("Load 12 simulated demo cases"):
-            inserted = load_demo(db)
-            flash(f"Loaded {inserted} simulated demo case(s). Existing cases and edits were preserved.")
-            st.rerun()
+        with st.sidebar.container(border=True):
+            st.caption("Sample Data · 100 fictional investigations using .example domains. Review outcomes are fictional.")
+            if st.button("Load Sample Dataset", width="stretch"):
+                inserted = load_demo(db)
+                flash(f"Added {inserted} new sample cases. Existing investigations were preserved.")
+                st.rerun()
         if message := st.session_state.pop("flash", None):
             st.success(message)
         if section == "New Investigation":

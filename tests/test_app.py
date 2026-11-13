@@ -69,11 +69,11 @@ def test_investigator_workflow(monkeypatch, tmp_path):
     assert restarted.metric[2].value == '1'
     assert len(restarted.get('download_button')) == 2
 
-    labeled(restarted.button, 'Load 12 simulated demo cases').click().run()
+    labeled(restarted.button, 'Load Sample Dataset').click().run()
     assert not restarted.exception
-    assert len(db.list_cases()) == 13
-    labeled(restarted.button, 'Load 12 simulated demo cases').click().run()
-    assert len(db.list_cases()) == 13
+    assert len(db.list_cases()) == 101
+    labeled(restarted.button, 'Load Sample Dataset').click().run()
+    assert len(db.list_cases()) == 101
     for section in ('New Investigation', 'Case Queue', 'Case Review & Evidence', 'Dashboard & Reports'):
         restarted.radio[0].set_value(section).run()
         assert not restarted.exception
@@ -92,7 +92,9 @@ def test_queue_opens_selected_case_and_restores_filters(monkeypatch, tmp_path):
     labeled(app.selectbox, 'Status filter').set_value('Reviewing')
     labeled(app.selectbox, 'Priority filter').set_value('Low')
     labeled(app.selectbox, 'Source filter').set_value('Website').run()
-    assert labeled(app.selectbox, 'Case to review').options == [f'{older} · Older case · Reviewing']
+    options = labeled(app.selectbox, 'Case to review').options
+    assert len(options) == 1
+    assert 'Older case' in options[0] and 'Reviewing' in options[0] and older[:12] in options[0]
     labeled(app.button, 'Open selected case').click().run()
     assert not app.exception
     assert app.radio[0].value == 'Case Review & Evidence'
@@ -136,3 +138,38 @@ def test_brandless_intake_save_and_open(monkeypatch, tmp_path):
     labeled(app.button, 'Open selected case').click().run()
     assert labeled(app.selectbox, 'Select case').value == cases[0]['case_id']
     assert not app.exception
+
+
+def test_sample_presentation_preserves_legacy_and_manual_titles(monkeypatch, tmp_path):
+    from core.demo import load_demo
+
+    monkeypatch.setenv('DRT_DATA_DIR', str(tmp_path))
+    db = Database(tmp_path / 'cases.sqlite3')
+    legacy = db.create_case(Intake('Website', 'https://astervale-security.example/login',
+                                  title='[SIMULATED] Legacy account alert'), demo_key='demo-v1-01')
+    manual = db.create_case(Intake('Other', title='[SIMULATED] Investigator supplied title'))
+    assert load_demo(db) == 99
+    app = AppTest.from_file(str(APP), default_timeout=20).run()
+    app.radio[0].set_value('Case Queue').run()
+    assert not app.exception
+    table = app.dataframe[0].value.set_index('Case ID')
+    assert len(table) == 101
+    assert table.loc[legacy, 'Title'] == 'Legacy account alert'
+    assert table.loc[legacy, 'Data'] == 'Sample Data'
+    assert table.loc[manual, 'Title'] == '[SIMULATED] Investigator supplied title'
+    assert table.loc[manual, 'Data'] == 'Investigator intake'
+    assert set(table['Source']) == {'Website', 'Social Media', 'Marketplace', 'Other'}
+    labeled(app.selectbox, 'Case to review').set_value(legacy)
+    labeled(app.button, 'Open selected case').click().run()
+    assert not app.exception
+    assert not app.warning
+    assert any('Sample Investigation' in caption.value for caption in app.caption)
+    assert any(text.value == 'Legacy account alert' for text in app.text)
+    assert not any('[SIMULATED]' in option for option in labeled(app.selectbox, 'Select case').options
+                   if 'Investigator supplied' not in option)
+    assert db.get_case(legacy)['title'] == '[SIMULATED] Legacy account alert'
+    app.radio[0].set_value('Dashboard & Reports').run()
+    assert not app.exception
+    assert [metric.value for metric in app.metric] == ['101', '67', '21', '13']
+    assert any('100 Sample Data' in caption.value and '1 Investigator intake' in caption.value
+               for caption in app.caption)

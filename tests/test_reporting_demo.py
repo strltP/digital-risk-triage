@@ -19,16 +19,16 @@ def db(tmp_path):
 
 
 def test_demo_coverage_idempotence_and_preserves_edits(db):
-    assert load_demo(db) == 12
+    assert load_demo(db) == 100
     cases = db.list_cases()
-    assert len(cases) == 12
+    assert len(cases) == 100
     assert set(c['category'] for c in cases) == set(CATEGORIES)
     assert all(c['is_demo'] and '.example' in c['source_url'] for c in cases)
-    assert len(db.list_cases(status='False Positive')) == 3
-    assert not db.list_cases(status='Validated')
+    assert len(db.list_cases(status='False Positive')) == 13
+    assert db.list_cases(status='Validated')
     db.update_review(cases[0]['case_id'], notes='Keep my edits', status='Reviewing', verdict='Inconclusive')
     assert load_demo(db) == 0
-    assert len(db.list_cases()) == 12
+    assert len(db.list_cases()) == 100
     assert db.get_case(cases[0]['case_id'])['notes'] == 'Keep my edits'
 
 
@@ -63,7 +63,7 @@ def test_empty_and_filtered_reports(db):
     assert load_workbook(BytesIO(export_excel(db)))['Cases'].max_row == 1
     load_demo(db)
     rows = list(csv.DictReader(StringIO(export_csv(db, db.list_cases(status='False Positive')).decode('utf-8-sig'))))
-    assert len(rows) == 3
+    assert len(rows) == 13
     assert all(row['data_label'] == 'SIMULATED DEMO' for row in rows)
 
 
