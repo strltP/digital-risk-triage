@@ -6,3 +6,11 @@ data/*
 !data/.gitkeep
 .streamlit/secrets.toml
 *.log
+
+# Local external evaluation inputs and generated reports.
+/evaluation/data/
+/datasets/external/
+/evaluation/results/*
+!/evaluation/results/.gitkeep
+PhiUSIIL*.csv
+phiusiil*.zip

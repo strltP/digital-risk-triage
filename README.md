@@ -210,17 +210,29 @@ tests/                       Core, dataset migration, export and UI workflow tes
 .streamlit/config.toml       Dark theme, upload cap and telemetry settings
 ```
 
+## Evaluation
+
+The standalone [offline evaluation module](evaluation/README.md) benchmarks the
+existing rules against a locally downloaded PhiUSIIL CSV. It reports URL-only
+phishing classification and passive URL screening separately, with deterministic
+sampling, constant baselines and aggregate error analysis. It does not launch
+Streamlit, access SQLite, train a model or visit dataset URLs. See its README for
+the exact command and protocol limits. Real-data results are pending because the
+official dataset download was unavailable in the development environment.
+
 ## Validation
 
 Executed on Linux with Python 3.12:
 
 - Pre-refactor baseline: **73 tests passed**.
-- Updated `python -m pytest -q`: **116 passed**, covering fresh/repeated loading,
+- Application/dataset regressions: **116 tests passed**, covering fresh/repeated loading,
   upgrade from the original 12, record/evidence preservation, review transitions,
   JSON structure/field errors, duplicate keys, missing/malformed files, working
   directory independence, reserved domains, actual rule outputs, export provenance
   and UI presentation. Invalid records are rejected before any case is inserted.
   Existing URL, evidence hashing/validation and spreadsheet formula tests also pass.
+- Standalone evaluation adds 40 synthetic-fixture tests; the full
+  `python -m pytest -q` suite passes **156 tests** without an external dataset.
 - Compared all 100 JSON records and imported case contents against the original
   Python fixtures: inputs, stable keys, notes, statuses, verdicts and computed
   assessments match exactly. A regression checksum protects the extracted content.
