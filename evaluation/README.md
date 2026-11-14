@@ -27,12 +27,21 @@ similarity values and numerical webpage features are not inputs. There is no
 URL-plus-title experiment in this implementation. Missing fields are not invented.
 The adapter validates the header and labels rather than guessing a different schema.
 
-**Real-data execution is pending.** During implementation the official UCI metadata
-and label documentation were inspected, but the Cloud proxy rejected the official
-ZIP request with HTTP 403. The raw release could not be downloaded or inspected,
-and no real PhiUSIIL benchmark was run. Tests use small synthetic reserved-domain
-CSV fixtures; their metrics are not published as benchmark results. Raw-release
-compatibility and actual metrics remain checks to perform after a local download.
+**Real-data execution remains blocked as of 14 November 2026.** The official UCI
+page was rechecked: it lists the original CSV (54.2 MB), 235,795 instances and the
+label mapping above. The Cloud workspace's outbound proxy rejected CONNECT to
+`archive.ics.uci.edu` with HTTP 403 (`curl` exit 56); no dataset bytes were received.
+Both the official ZIP and metadata API requests were blocked. A separate web
+reader could read the landing page, but its download reader rejected the ZIP
+because it exceeds its 4 MiB response limit.
+
+The original CSV header, preprocessing counts and adapter compatibility with the
+raw release therefore remain **unverified**. `URL`/`label` are the adapter's required
+schema, supported by the published metadata; this is not an inspection of the
+original file. No real benchmark or replacement third-party dataset was used.
+Tests use clearly synthetic reserved-domain fixtures only; their metrics are not
+published as real results. See the [Phase 3 review](../docs/phase-3-review.md) for
+the acquisition record and audit findings.
 
 ## Run
 
@@ -57,24 +66,37 @@ python -m evaluation.evaluate --dataset evaluation/data/PhiUSIIL_Phishing_URL_Da
 `--protocol url-screening` runs only one protocol; default `both` keeps their results
 separate. `--output` defaults to `evaluation/results/latest`. Reusing an output
 directory replaces its three report files. The input CSV cannot be an output file.
+All three destinations are checked before any report is replaced: symbolic links,
+files with extra hard links and non-regular files are rejected. This preflight does
+not make multiple writes atomic against later disk failures or concurrent changes.
 Run `python -m evaluation.evaluate --help` for arguments and errors.
 
 ## Two protocols
 
 | Protocol | Existing function and inputs | Positive prediction | Interpretation |
 |---|---|---|---|
-| A: `assessment` | `assess(Intake(source_type="Website", url=URL))`; brand, official_domain, title, description and notes are empty | Category equals `Potential phishing` | Existing classification behavior with limited inputs |
+| A: `assessment` | `assess(Intake(source_type="Website", url=URL))`; brand, official_domain, title, description and notes are empty | Category equals `Potential phishing` | Limited-input diagnostic: always negative under the current rules |
 | B: `url-screening` | `analyze_url(URL, official="")` | At least one configured URL indicator | A structural URL review flag, not a verified phishing finding |
 
 The URL column, with boundary whitespace trimmed, is the only detector input.
 Ground-truth labels are used solely for sampling and scoring. Neither protocol
 uses precomputed dataset features. The rules remain unchanged.
 
-URL-only assessment has no credential-request text, account-verification wording,
-or official brand reference. Poor recall or zero phishing predictions are valid
-findings under those constraints. Domain similarity needs brand context and is not
-measured here. Priorities and RapidFuzz similarity are not probabilities; a URL
-indicator alone proves neither phishing nor safety.
+**Protocol A always predicts the negative class for every accepted URL under the
+current rules.** The only phishing category condition is a credential request or
+verification plus urgency in title/description. Both text fields are empty;
+URL path/query wording never enters those regexes. No brand reference is supplied
+either. The assessment falls back to `Other suspicious content`, even when URL
+indicators are present. Its metrics equal the always-legitimate baseline; this is
+an input-sufficiency diagnostic, not an effective phishing detector. The CLI name
+`assessment` is retained for compatibility, and reports identify its purpose.
+
+Protocol B compares structural review flags against the dataset's phishing labels.
+A flagged legitimate record is a false positive **for that binary comparison**;
+an unflagged phishing record is a false negative. Neither outcome decides a case's
+human verdict, and a flag does not determine the application's review priority.
+Brand/domain similarity is not measured without brand context. Priorities and
+RapidFuzz similarity are not probabilities; absence of indicators is not safety.
 
 ## Preprocessing and reproducibility
 
@@ -114,6 +136,12 @@ code commit and pinned environment to reproduce a run; timestamps naturally diff
 Commit code before benchmarking: a dirty working tree cannot be reproduced from
 the commit SHA alone.
 
+There is no training or tuning stage and no train/test split. Labels enter only
+stratified sampling, scoring and error aggregation. Global exact-key deduplication
+prevents duplicate rows from dominating the sample, but related domains and
+near-duplicate URL variants can remain correlated. The result is a descriptive
+fixed-dataset experiment, not evidence of performance on independent current traffic.
+
 ## Metrics and reports
 
 Phishing is positive throughout. Each protocol receives its own TP, FP, TN, FN,
@@ -143,6 +171,8 @@ The command creates:
   with columns `evaluation,actual,predicted,count`.
 
 Matrix order is legitimate, phishing for both axes: `[[TN, FP], [FN, TP]]`.
+For `url-screening`, predicted negative/positive mean unflagged/flagged; these
+column encodings are not findings of legitimate/phishing activity.
 Always-legitimate and always-phishing baselines are constant reference predictions,
 not production systems. Protocol scores are never averaged or combined.
 
@@ -160,14 +190,17 @@ python -m pytest -q
 Automated tests use synthetic fixtures only; ordinary pytest needs no dataset
 download. They cover label direction, malformed input, duplicate conflicts,
 deterministic stratification, hand-calculated metrics, zero denominators, protocol
-mapping, label isolation, report generation and unchanged SQLite bytes. A fresh
+mapping, always-negative URL-only assessment, label isolation, safe output
+destinations, report generation and unchanged SQLite bytes. A fresh
 subprocess verifies the CLI imports neither Streamlit nor `core.database`.
 Network calls are blocked during isolation tests.
 
 This benchmark does not evaluate counterfeit or trademark detection, the complete
 taxonomy, investigator decisions, evidence management or case workflow quality.
 Balanced samples change prevalence, so their precision and accuracy do not predict
-operational traffic performance. It does not estimate confidence intervals, audit
+operational traffic performance. Accuracy alone can conceal zero phishing recall;
+undefined precision is a convention rather than a measured predictive value.
+It does not estimate confidence intervals, audit
 label truth or establish generalization to current traffic. A separate,
 independently specified URL-plus-title experiment or multiple/time-separated cohorts
 could be future work; no such experiments or rule adjustments are made here.

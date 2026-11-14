@@ -177,6 +177,32 @@ def test_actual_url_indicator_screening():
         evaluate.predict('https://ordinary.example/', 'unknown')
 
 
+@pytest.mark.parametrize('url', [
+    'https://ordinary.example/',
+    'https://192.0.2.10/',
+    'https://xn--bcher-kva.example/',
+    'https://a.b.c.d.example/',
+    'https://identity.example@outside.example/',
+    'https://redirect.example/?next=https://destination.example/',
+    'https://long.example/' + 'x' * 210,
+    'https://account.example/enter-password/verify-your-account',
+])
+def test_url_only_assessment_is_negative_even_with_url_indicators(url):
+    # Credential/verification regexes inspect title/description, never URL text.
+    assert evaluate.predict(url, 'assessment')[0] is False
+
+
+def test_assessment_diagnostic_matches_constant_negative_baseline(fixture_csv, tmp_path):
+    summary = evaluate.run_benchmark(fixture_csv, sample_size=None)
+    assessment = summary['protocols']['assessment']
+    assert assessment['metrics'] == summary['baselines']['always-legitimate']
+    assert 'Limited-input diagnostic' in assessment['purpose']
+    write_reports(summary, tmp_path / 'diagnostic')
+    report = (tmp_path / 'diagnostic/report.md').read_text()
+    assert 'always predict negative' in report
+    assert 'no structural flag / flagged for review' in report
+
+
 def test_no_fabricated_fields_or_label_leakage(monkeypatch, tmp_path):
     seen = []
     original = evaluate.assess
@@ -289,3 +315,40 @@ def test_cli_refuses_to_overwrite_input_file(tmp_path):
         evaluate.main(['--dataset', str(path), '--full', '--output', str(tmp_path)])
     assert error.value.code == 2
     assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize('filename', ['summary.json', 'report.md', 'confusion_matrix.csv'])
+def test_all_report_destinations_checked_before_any_replacement(filename, fixture_csv, tmp_path):
+    summary = evaluate.run_benchmark(fixture_csv, sample_size=None)
+    output = tmp_path / 'existing'
+    output.mkdir()
+    originals = {name: ('Keep ' + name).encode() for name in ('summary.json', 'report.md', 'confusion_matrix.csv')}
+    for name, content in originals.items():
+        (output / name).write_bytes(content)
+    target = tmp_path / 'unrelated.txt'
+    target.write_bytes(b'Keep unrelated data')
+    (output / filename).unlink()
+    (output / filename).symlink_to(target)
+    with pytest.raises(OSError, match='symbolic link'):
+        write_reports(summary, output)
+    assert target.read_bytes() == b'Keep unrelated data'
+    assert all((output / name).read_bytes() == content for name, content in originals.items() if name != filename)
+
+
+@pytest.mark.parametrize('kind', ['hardlink', 'directory'])
+def test_cli_rejects_unsafe_late_destination_without_partial_reports(kind, fixture_csv, tmp_path):
+    output = tmp_path / 'unsafe'
+    output.mkdir()
+    for name in ('summary.json', 'report.md'):
+        (output / name).write_text('Keep existing report', encoding='utf-8')
+    destination = output / 'confusion_matrix.csv'
+    if kind == 'hardlink':
+        destination.hardlink_to(fixture_csv)
+    else:
+        destination.mkdir()
+    before = fixture_csv.read_bytes()
+    with pytest.raises(SystemExit) as error:
+        evaluate.main(['--dataset', str(fixture_csv), '--full', '--output', str(output)])
+    assert error.value.code == 2
+    assert fixture_csv.read_bytes() == before
+    assert all((output / name).read_text() == 'Keep existing report' for name in ('summary.json', 'report.md'))

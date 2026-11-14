@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 LIMITATIONS = [
-    "Protocol A measures the existing full assessment with URL-only inputs; positive means category Potential phishing.",
+    "Protocol A is a limited-input diagnostic: with empty title/description and no brand context, the current rules always predict negative.",
     "Protocol B measures passive URL screening; a review flag is not a verified phishing classification.",
     "No title, description, official brand domain, label-derived content or numerical dataset feature enters either detector.",
     "Brand context is absent, so domain similarity checks are unavailable. RapidFuzz similarity is not phishing probability.",
@@ -13,6 +13,7 @@ LIMITATIONS = [
     "Undefined metric ratios are reported as 0.0 and named explicitly in undefined_metrics.",
     "Dataset labels do not evaluate counterfeit, trademark misuse, human review, evidence handling or the full investigation workflow.",
     "Balanced sampling changes class prevalence; these precision and accuracy values need not represent operational traffic.",
+    "Accuracy alone is insufficient. There is no training split; related domains and near-duplicate URLs can remain after exact-key deduplication.",
     "These are descriptive results on a fixed labeled dataset, not deployment guarantees or a model-training experiment.",
 ]
 
@@ -33,7 +34,7 @@ def render_markdown(summary: dict) -> str:
     lines = [
         "# Digital Risk Triage — Offline Evaluation", "", "## Executive summary", "",
         f"Evaluated **{sampling['evaluated_records']:,}** local CSV records: {classes['phishing']:,} phishing and "
-        f"{classes['legitimate']:,} legitimate. Results for classification and URL screening are reported separately.",
+        f"{classes['legitimate']:,} legitimate. Results for the limited-input diagnostic and URL screening are reported separately.",
         "No detection thresholds were tuned and no model was trained.", "", "## Dataset and provenance", "",
         f"Dataset reference: [{dataset['name']}]({dataset['source']}).",
         f"Attribution: {dataset['attribution']}; license: {dataset['license']}.",
@@ -47,7 +48,9 @@ def render_markdown(summary: dict) -> str:
         "Only the original `URL` string, trimmed at its boundaries, enters the detector. `source_type` is `Website`; "
         "brand, official_domain, title and description are empty. `Title` and all numerical features are ignored. "
         "Ground-truth labels control stratification and scoring only.",
-        "Protocol A calls `assess()`; a positive prediction requires category `Potential phishing`. "
+        "Protocol A (`assessment`) is a limited-input diagnostic calling `assess()`; "
+        "a positive prediction requires category `Potential phishing`. With empty title/description and no brand, "
+        "the current rules always predict negative, matching the always-legitimate baseline. "
         "Protocol B calls `analyze_url()` with no official domain; any configured URL indicator flags a URL for review. "
         "The protocols are never combined into a headline score.",
         "", "## Preprocessing and sampling", "",
@@ -75,7 +78,9 @@ def render_markdown(summary: dict) -> str:
               "Constant predictions are context only, not competing production systems.", ""]
     lines += metric_table(summary["baselines"])
     lines += ["", "## Confusion matrices", "",
-              "Rows are actual labels; columns are predicted labels. Order: legitimate, phishing."]
+              "Rows are actual dataset labels; columns use the binary target encoding. Order: legitimate, phishing. "
+              "For URL screening, the predicted columns mean no structural flag / flagged for review, "
+              "not a finding of legitimacy or phishing."]
     for name, result in summary["protocols"].items():
         metrics = result["metrics"]
         lines += ["", f"### {name}", "", "| Actual / Predicted | Legitimate | Phishing |", "|---|---:|---:|",
@@ -84,7 +89,7 @@ def render_markdown(summary: dict) -> str:
                   "", f"Undefined ratios (reported as 0.0): {', '.join(metrics['undefined_metrics']) or 'none'}."]
     lines += ["", "## Interpretation", "",
               "URL-only assessment has no credential-request text, verification wording or brand context. "
-              "Zero phishing predictions and poor recall are legitimate findings under those input constraints; "
+              "The current rules always predict negative under those constraints; "
               "they do not establish that the URLs are safe. Screening flags structural URL properties, which may "
               "also occur on legitimate sites. Compare each protocol separately with the trivial baselines.",
               "", "## False-positive and false-negative analysis", "",
@@ -122,9 +127,15 @@ def write_reports(summary: dict, output: str | Path) -> None:
             for column, prediction in enumerate(matrix["labels"]):
                 writer.writerow([name, actual, prediction, matrix["values"][row][column]])
     output.mkdir(parents=True, exist_ok=True)
-    for filename, content in (("summary.json", serialized), ("report.md", markdown),
-                              ("confusion_matrix.csv", matrix_csv.getvalue())):
+    reports = (("summary.json", serialized), ("report.md", markdown),
+               ("confusion_matrix.csv", matrix_csv.getvalue()))
+    # Validate every destination before replacing any existing report. A linked
+    # destination could otherwise overwrite an input or an unrelated local file.
+    for filename, _ in reports:
         path = output / filename
         if path.is_symlink():
             raise OSError(f"Report destination is a symbolic link: {path}")
-        path.write_text(content, encoding="utf-8")
+        if path.exists() and (not path.is_file() or path.stat().st_nlink > 1):
+            raise OSError(f"Report destination must be a regular file without extra hard links: {path}")
+    for filename, content in reports:
+        (output / filename).write_text(content, encoding="utf-8")

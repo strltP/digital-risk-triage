@@ -16,6 +16,10 @@ from evaluation.metrics import binary_metrics
 from evaluation.reporting import LIMITATIONS, write_reports
 
 PROTOCOLS = ("assessment", "url-screening")
+PROTOCOL_PURPOSES = {
+    "assessment": "Limited-input diagnostic; not a phishing detection benchmark with sufficient inputs.",
+    "url-screening": "Structural URL review flags compared with dataset labels; not confirmed phishing findings.",
+}
 
 
 def predict(url: str, protocol: str) -> tuple[bool, list[str]]:
@@ -69,6 +73,7 @@ def run_benchmark(dataset_path: str | Path, *, sample_size: int | None = 1000,
         predictions = [prediction for prediction, _ in outcomes]
         indicators = [signals for _, signals in outcomes]
         protocols[name] = {
+            "purpose": PROTOCOL_PURPOSES[name],
             "positive_definition": "category == Potential phishing" if name == "assessment" else "one or more passive URL indicators",
             "metrics": binary_metrics(actual, predictions),
             "error_analysis": {
@@ -77,7 +82,7 @@ def run_benchmark(dataset_path: str | Path, *, sample_size: int | None = 1000,
             },
         }
     return {
-        "report_version": "1.0", "evaluation_timestamp": datetime.now(timezone.utc).isoformat(),
+        "report_version": "1.1", "evaluation_timestamp": datetime.now(timezone.utc).isoformat(),
         "dataset": {"name": NAME, "source": SOURCE, "license": "CC BY 4.0",
                     "attribution": "Arvind Prasad and Shalini Chandra (2024), UCI Machine Learning Repository",
                     "label_convention": {"0": "phishing", "1": "legitimate"}, "sha256": dataset.sha256,

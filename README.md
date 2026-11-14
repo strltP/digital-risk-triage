@@ -19,53 +19,14 @@ Analysis is preliminary: investigators make the final decisions.
 
 ## Screenshots
 
-Captured from the running Phase 2 application in Chromium with a consistent
-1920-pixel-wide viewport and isolated fictional data:
+Actual Phase 2 captures from Chromium, using a consistent 1920-pixel-wide viewport
+and isolated fictional records. These images remain unchanged in Phase 3.
 
 ![Case queue filtered to Reviewing sample cases matching Astervale](docs/screenshots/case-queue.png)
 
-![Sample review showing a preliminary assessment and a separate fictional human verdict](docs/screenshots/case-review.png)
-
-Also view [new investigation intake with an explicit UTC observation preview](docs/screenshots/new-investigation.png)
-and [dashboard and reports scoped to Sample Data](docs/screenshots/dashboard-reports.png).
-
-## Run locally on Windows and in Visual Studio Code
-
-Install **Python 3.11 or newer**. Open the repository folder in VS Code, choose
-**Terminal → New Terminal**, and run these commands from that folder:
-
-```powershell
-py -3 --version
-py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1
-```
-
-In VS Code, use **Python: Select Interpreter** from the Command Palette and select
-`.venv\Scripts\python.exe`. Open the local address printed by Streamlit. Stop with
-`Ctrl+C`; subsequent launches need only the final command. Append
-`--server.port 8502` if port 8501 is occupied. Using the environment's Python
-directly avoids PowerShell activation-policy changes.
-
-Run tests:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest -q
-```
-
-### Linux / macOS
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -m streamlit run app.py --server.address 127.0.0.1
-# In another terminal, or after stopping Streamlit:
-.venv/bin/python -m pytest -q
-```
-
-Installation requires package downloads. The investigation workflow then runs
-offline: submitted URLs are inspected as strings and are never visited.
-Streamlit usage telemetry is disabled.
+View [Case Review & Evidence](docs/screenshots/case-review.png),
+[New Investigation with UTC preview](docs/screenshots/new-investigation.png), and
+[Dashboard & Reports scoped to Sample Data](docs/screenshots/dashboard-reports.png).
 
 ## Investigation workflow
 
@@ -124,6 +85,34 @@ Preview → Save. Ordinary tables and summaries show times such as
 precision; compact queue displays do not rewrite stored values.
 Reviews leave observation/creation times intact. Existing SQLite columns are reused
 without a migration, reset or automatic timestamp correction.
+
+## Architecture
+
+The application and offline evaluation use the same existing detection logic;
+evaluation has no connection to the investigator database or evidence directory.
+
+```mermaid
+flowchart LR
+    subgraph App["Application"]
+        I[Investigation intake] --> R[Rule-based engine]
+        R --> D[(SQLite)] --> H[Human review] --> E[Manual evidence] --> X[CSV / Excel reports]
+    end
+    subgraph Eval["Independent evaluation"]
+        C[External CSV] --> A[Adapter and sampling]
+        A --> L[Existing detection logic] --> M[Metrics] --> B[Benchmark reports]
+    end
+```
+
+| Component | Responsibility |
+|---|---|
+| `app.py`, `core/presentation.py` | Native Streamlit workflows, display, source filters and queue ordering |
+| `core/models.py` | Intake validation, review choices and UTC timestamps |
+| `core/url_analysis.py`, `core/risk_rules.py` | Offline URL inspection and explainable preliminary assessment |
+| `core/database.py`, `core/dataset_loader.py` | SQLite, review validation and atomic/idempotent JSON import |
+| `core/evidence.py`, `core/reporting.py` | Image validation, original bytes, SHA-256 metadata and spreadsheet-safe reports |
+| `datasets/sample_cases.json` | 100 fictional observations and review outcomes; never benchmark ground truth |
+| `evaluation/` | Local CSV adapter, separate protocols, binary metrics and hash-only reports |
+| `tests/`, `.github/workflows/tests.yml` | Regression tests and CI lint/test checks |
 
 ## Load the 100-case sample dataset
 
@@ -209,15 +198,14 @@ and 80/100 similarity, or official-domain text placed inside an unrelated hostna
 can flag resemblance. Host matching respects subdomain boundaries. Similarity is
 not a probability or proof of ownership.
 
-`core/risk_rules.py` checks the title and description for credential requests,
-verification/suspension wording, urgency, affiliation, replica terms and trademark
-use. Brand-specific text checks require the named brand to occur in the content;
-investigator notes are excluded. Category precedence is phishing, marketplace
-counterfeit, outside-host affiliation, trademark use, domain resemblance, then
-other content. High priority requires credential requests plus verification or
-urgency on a host outside the configured official domain. Other configured risk
-signals receive Medium; remaining observations receive Low. No fixture forces a
-category or priority.
+`core/risk_rules.py` checks title/description for credentials, verification, urgency,
+affiliation, replica terms and trademark use. Brand text checks require the named
+brand in the content; investigator notes are excluded. Category precedence is
+phishing, marketplace counterfeit, outside-host affiliation, trademark use, domain
+resemblance, then other content. High priority requires credentials plus verification
+or urgency without a configured official-host match. Other configured priority
+conditions yield Medium; structural warnings such as an IP host alone leave Low.
+No fixture forces a category or priority.
 
 `Other suspicious content` is the compatibility fallback when no more specific
 category matches, including observations without configured risk indicators.
@@ -246,65 +234,114 @@ directory. Stop the application and back up the database and evidence directory
 together. Local data is Git-ignored. Tests use `data/test-tmp/`; do not store user
 investigations there.
 
-## Architecture
+## Evaluation methodology and status
 
-```text
-app.py                       Native Streamlit interface and navigation
-core/presentation.py         Display helpers, data-source scope and queue ordering
-core/models.py               Intake validation, enums and UTC timestamps
-core/url_analysis.py         Offline URL/domain inspection
-core/risk_rules.py           Explainable preliminary category and priority
-core/database.py             SQLite persistence and review transition validation
-core/evidence.py             Image validation, storage and SHA-256 metadata
-core/reporting.py            Formula-safe CSV and Excel reports
-core/dataset_loader.py       JSON validation and idempotent sample seeding
-core/demo.py                 Backward-compatible load_demo() wrapper
-datasets/sample_cases.json   100 fictional observations, timestamps and review metadata
-tests/                       Core, dataset migration, export and UI workflow tests
-.streamlit/config.toml       Dark theme, upload cap and telemetry settings
+The [offline evaluation module](evaluation/README.md) compares URL-only behavior
+with the official [PhiUSIIL dataset](https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+dataset).
+It runs independently of Streamlit, SQLite and the synthetic cases.
+
+| Protocol | What it measures | Interpretation |
+|---|---|---|
+| `assessment` | Existing `assess()` with URL only; empty brand/title/description | Limited-input diagnostic: the current rules always predict negative, matching the always-legitimate baseline |
+| `url-screening` | One or more existing structural URL indicators | Review flags compared with phishing labels; not confirmed phishing or review priority |
+
+Phishing classification depends on credential/verification/urgency text that this
+URL-only benchmark does not supply. Rules were not changed to improve scores.
+Brand/domain similarity also needs context that neither protocol receives.
+
+**No real benchmark results are available.** On 14 November 2026, the workspace
+proxy blocked the official UCI download at CONNECT with HTTP 403, before any CSV
+bytes were received. The original header, cleaned counts and original-release
+adapter compatibility remain unverified. Published UCI metadata and label direction
+were checked; synthetic unit fixtures are not presented as real benchmarks.
+See the [Phase 3 audit and acquisition record](docs/phase-3-review.md).
+
+After obtaining the original CSV locally:
+
+```bash
+python -m evaluation.evaluate --dataset evaluation/data/PhiUSIIL_Phishing_URL_Dataset.csv --sample-size 1000 --seed 42 --protocol both --output evaluation/results/phiusiil-1000
 ```
 
-## Evaluation
+This requests 500 unique usable records per class. Reports include input/selection
+fingerprints, code/environment provenance, exclusions, separate metrics, baselines,
+confusion matrices and hash-only error examples. Dataset URLs are never visited or
+published. See [evaluation instructions](evaluation/README.md) for full mode and schema.
 
-The standalone [offline evaluation module](evaluation/README.md) benchmarks the
-existing rules against a locally downloaded PhiUSIIL CSV. It reports URL-only
-phishing classification and passive URL screening separately, with deterministic
-sampling, constant baselines and aggregate error analysis. It does not launch
-Streamlit, access SQLite, train a model or visit dataset URLs. See its README for
-the exact command and protocol limits. Real-data results are pending because the
-official dataset download was unavailable in the development environment.
+Balanced sampling changes prevalence, so precision may differ from operational
+traffic. Accuracy alone can conceal zero recall. Undefined ratios are explicitly
+listed and represented as zero, rather than claimed as measured precision. A URL
+indicator is not a fraud probability; High priority does not establish wrongdoing.
+This experiment does not measure counterfeit/trademark accuracy, platform-wide
+impersonation detection, investigator decisions, evidence authenticity or overall
+application accuracy.
 
-## Validation
+## Testing and reliability
 
-Executed on Linux with Python 3.12:
+Locally executed on Linux / Python 3.12:
 
-- Phase 2 starts from Phase 1 commit `84811cf`, with **219 passing tests**.
-- Updated `python -m pytest -q`: **253 passed, 0 failed, 0 skipped**, including
-  34 additional Phase 2 cases and the 40 unchanged Evaluation tests. Added coverage
-  checks combined source filters, all search fields and sort modes, empty views,
-  full-ID row mapping (including short-ID collisions), retained navigation state,
-  scoped dashboard/chart/CSV/Excel output, timestamp formatting and offset input,
-  stale or invalid Analyze → Preview → Save submissions, and existing evidence
-  presentation. Phase 1 review, sample-loading, timestamp and core regressions
-  remain in the suite.
-- The dataset, schema, rule engine, review validation, evidence storage, reporting
-  and evaluation code are unchanged from the Phase 1 base.
+- Phase 2 baseline independently confirmed: **253 passed**.
+- Phase 3 full suite: **267 passed, 0 failed, 0 skipped**. Fourteen additional
+  evaluation cases cover the negative-only diagnostic and safe report destinations.
+  Existing loading/upgrade, atomic rollback, stable keys, SQLite persistence, review,
+  timestamps, queue navigation/search/filters, dashboard, evidence and export tests
+  remain intact. Evaluation tests use synthetic reserved-domain fixtures, with
+  network/database isolation checks.
+- **Ruff 0.11.13:** `python -m ruff check .` passes. Minimal rules **E4, E7, E9, F**
+  check syntax/import/name errors without a formatting sweep. Ruff is in
+  `requirements-dev.txt`; production requirements are unchanged.
 - `python -m pip check`: no broken requirements.
-- Streamlit startup and local HTTP health check succeeded using isolated data.
-  After a server restart, a fresh browser session reopened the stored case with
-  its review, notes and evidence preview intact; stored case records were identical.
-- Chromium exercised native table selection, retained queue filters/search,
-  observation-time rejection and saving, review navigation, rejected escalation,
-  review saving, a real local PNG upload/preview, scoped dashboard metrics and
-  CSV/Excel downloads. Downloaded reports preserved full IDs, timestamp precision
-  and evidence references; stored PNG bytes, size and SHA-256 matched the upload.
-  All 102 pre-existing isolated test records remained unchanged, including the
-  100 samples. No page errors or external HTTP requests occurred. The four
-  screenshots above were refreshed from these actual workflows.
+- GitHub Actions installs pinned development requirements and runs Ruff followed by
+  Pytest with read-only repository permissions. No external dataset is required.
+  Local equivalents passed; consult the branch's Actions run for hosted status.
 
-A native Windows run and GitHub-hosted CI were not executed in this environment.
-Phase 3 remains separate: external benchmarks and evaluation interpretation,
-lightweight lint tooling, licensing/metadata review and final repository presentation.
+Phase 2's actual Chromium smoke tests covered native row selection, retained
+navigation, timestamp saving/rejection, review rules, PNG upload/preview, scoped
+CSV/Excel downloads and server restart. Bytes/hashes and 102 pre-existing test
+records were preserved. Phase 3 leaves the application, core rules, sample JSON,
+theme and those screenshots unchanged; it does not claim a repeated browser suite.
+Native Windows execution remains unverified.
+
+## Run locally on Windows and in Visual Studio Code
+
+Install **Python 3.11 or newer**. Open the repository folder in VS Code, choose
+**Terminal → New Terminal**, and run these commands from that folder:
+
+```powershell
+py -3 --version
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1
+```
+
+In VS Code, use **Python: Select Interpreter** from the Command Palette and select
+`.venv\Scripts\python.exe`. Open the local address printed by Streamlit. Stop with
+`Ctrl+C`; subsequent launches need only the final command. Append
+`--server.port 8502` if port 8501 is occupied. Using the environment's Python
+directly avoids PowerShell activation-policy changes.
+
+For development checks, install the pinned lint dependency separately:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+### Linux / macOS
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m streamlit run app.py --server.address 127.0.0.1
+# In another terminal, or after stopping Streamlit:
+.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m ruff check .
+.venv/bin/python -m pytest -q
+```
+
+Installation requires package downloads. The investigation workflow then runs
+offline: submitted URLs are inspected as strings and are never visited.
+Streamlit usage telemetry is disabled.
 
 ## Limitations
 
@@ -320,3 +357,14 @@ lightweight lint tooling, licensing/metadata review and final repository present
   UI. Arbitrary historical schema migrations and very large collections are beyond
   the current MVP. Sample loading preserves existing records rather than resetting
   them to the fixture state.
+
+## Licensing and repository metadata
+
+No `LICENSE` file is present. The owner must choose a license before offering
+open-source reuse; MIT is a simple portfolio option, subject to that decision.
+No license was added during this review. PhiUSIIL's **CC BY 4.0** dataset attribution
+is separate from the application's licensing.
+
+The GitHub description and topics are currently empty. Metadata write access was
+unavailable through the supplied tools; recommended values and the verified status
+are recorded in the [Phase 3 review](docs/phase-3-review.md#repository-metadata-and-licensing).

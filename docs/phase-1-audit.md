@@ -76,11 +76,12 @@ No regex, threshold, category precedence or priority condition was changed.
   original 12-case upgrade. Existing sample rows deliberately keep their previous
   notes and timestamps; the corrected fixture is not a data migration.
 
-## Deferred scope
+## Historical scope and follow-up
 
-Phase 2: manual observation-time controls, sample/manual filtering, search/sort,
-readable timestamps/IDs, review presentation and screenshot refreshes.
+At the end of Phase 1, manual observation-time controls, sample/manual filtering,
+search/sort, readable timestamps/IDs, review presentation and screenshot refreshes
+were deferred. Phase 2 implemented them in commit `b22f8fe`.
 
-Phase 3: real external benchmarking, evaluation methodology review, development
-tooling, licensing and broader repository presentation. No Evaluation source or
-documentation was changed as part of Phase 1.
+The [Phase 3 review](phase-3-review.md) records the evaluation audit, blocked
+official-data acquisition, development tooling and repository presentation review.
+No Evaluation source or documentation was changed as part of Phase 1 itself.
