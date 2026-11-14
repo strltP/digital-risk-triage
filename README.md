@@ -9,7 +9,8 @@ Analysis is preliminary: investigators make the final decisions.
 
 - Structured intake for websites, social media, marketplaces and other sources.
 - Passive URL parsing, domain similarity and explainable category/priority rules.
-- A filterable case queue with direct review navigation and readable case titles.
+- A searchable case queue with sample/intake filters, deterministic sorting and native row selection.
+- Optional observation-time entry with UTC preview and readable case identifiers.
 - Investigator notes, manual verdicts, false-positive handling and validation before escalation.
 - Manual PNG/JPEG evidence uploads with source/time metadata and SHA-256 hashes.
 - Dashboard metrics, a category chart and filtered CSV/Excel exports.
@@ -18,14 +19,15 @@ Analysis is preliminary: investigators make the final decisions.
 
 ## Screenshots
 
-Captured from the running application in Chromium using isolated sample data:
+Captured from the running Phase 2 application in Chromium with a consistent
+1920-pixel-wide viewport and isolated fictional data:
 
-![Case queue with 100 sample investigations](docs/screenshots/case-queue.png)
+![Case queue filtered to Reviewing sample cases matching Astervale](docs/screenshots/case-queue.png)
 
-![Sample investigation with a fictional review outcome](docs/screenshots/case-review.png)
+![Sample review showing a preliminary assessment and a separate fictional human verdict](docs/screenshots/case-review.png)
 
-Also view [new investigation intake](docs/screenshots/new-investigation.png) and
-[dashboard and reports](docs/screenshots/dashboard-reports.png).
+Also view [new investigation intake with an explicit UTC observation preview](docs/screenshots/new-investigation.png)
+and [dashboard and reports scoped to Sample Data](docs/screenshots/dashboard-reports.png).
 
 ## Run locally on Windows and in Visual Studio Code
 
@@ -68,15 +70,27 @@ Streamlit usage telemetry is disabled.
 ## Investigation workflow
 
 1. **New Investigation:** supply a URL or meaningful title/description. Brand and
-   official domain are optional; supplying both enables domain comparison. Analyze
-   the observation, inspect the preliminary indicators, then save it. After editing
-   a form, analyze again before saving; the preview identifies the saved submission.
-2. **Case Queue:** filter by status, priority, category or source. Select a case and
-   choose **Open selected case**. Returning to the queue preserves its filters.
-   Sample records carry a small **Sample Data** label; manual records show
-   **Investigator intake**.
-3. **Case Review & Evidence:** inspect the stored analysis, add notes, and record
-   a manual verdict. **Validated** requires **Confirmed violation** and supporting
+   official domain are optional; supplying both enables domain comparison. Leave
+   **Observation time (optional, UTC)** blank for automatic UTC, or enter an ISO
+   timestamp with `Z` or an explicit offset, such as `2025-01-06T15:00:00+07:00`.
+   Analyze the observation, inspect the UTC time and preliminary indicators, then
+   save it. Save submits current form values too: edited inputs require a fresh
+   analysis, and invalid or future times are rejected.
+2. **Case Queue:** choose **All cases**, **Sample Data** or **Investigator intake**,
+   together with status, priority, category and source-type filters. Search by
+   title, full Case ID, brand or source URL, ignoring letter case. The default
+   **Priority high to low** puts New/Reviewing cases first within each priority,
+   followed by newest observation time and full Case ID to break ties. **Priority
+   low to high**, **Newest observed** and **Oldest observed** are also available.
+   Select a table row and choose **Open selected case**. Returning to the queue
+   preserves filters, search, sorting and the selected case when still visible.
+   Short IDs are for display; navigation always uses the complete Case ID.
+   Sample records carry **Sample Data** labels; manual records show **Investigator intake**.
+3. **Case Review & Evidence:** review the summary and observation details, inspect
+   the preliminary assessment, then add investigator notes and a separate manual
+   verdict. **Case metadata** exposes the full Case ID and timestamps; assessment
+   reasoning and raw URL details remain available in expanders.
+   **Validated** requires **Confirmed violation** and supporting
    notes. Save that state before **Escalated**. **False Positive** requires
    **No violation found** and notes. Reopening a case clears validation, so it must
    be validated again before escalation. Review decisions do not rewrite the
@@ -84,12 +98,17 @@ Streamlit usage telemetry is disabled.
    Pending review, Inconclusive, or a provisional No violation found with supporting
    notes. False Positive closes a cleared reported concern; a positive machine
    detection is not required.
-4. **Evidence:** manually upload a PNG/JPEG screenshot. Check the source URL and
-   timezone-aware observation time; the default is the case observation time.
-   The app stores original bytes, upload time, filename, size and SHA-256 hash.
+4. **Supporting evidence:** expand **Attach a screenshot** to manually upload a
+   PNG/JPEG image. Check the source URL and timezone-aware observation time; the
+   default is the case observation time. The app stores original bytes, upload
+   time, filename, size and SHA-256 hash. Preview cards retain detailed metadata
+   in expanders.
 5. **Dashboard & Reports:** see totals, awaiting review (New + Reviewing), validated
    cases (Validated + Escalated), false positives and category distribution.
-   Independent report filters control CSV and Excel downloads.
+   **Data source** scopes both metrics and the chart; the active scope and sample/
+   intake counts are shown explicitly. The four report filters further narrow
+   that scope for CSV and Excel downloads. An empty scope shows zero metrics and
+   disables report downloads.
 
 ### Observation and storage times
 
@@ -97,8 +116,12 @@ Streamlit usage telemetry is disabled.
 when the case was added locally, and `updated_at` records its latest stored update.
 `Database.create_case(intake, observed_at="2025-01-06T15:00:00+07:00")` accepts an
 optional timezone-aware ISO 8601 observation time, normalizes it to UTC and rejects
-invalid/future values. Omitting it preserves the current UTC default. The existing
-intake form keeps that default; manual timestamp entry is deferred to Phase 2.
+invalid/future values. Omitting it preserves the current UTC default. The intake
+form uses this same validation and API, retaining the analyzed timestamp through
+Preview → Save. Ordinary tables and summaries show times such as
+`06 Jan 2025, 08:00 UTC`, without microseconds. **Case metadata** and the canonical
+**Download CSV** / **Download Excel** reports retain full IDs and original timestamp
+precision; compact queue displays do not rewrite stored values.
 Reviews leave observation/creation times intact. Existing SQLite columns are reused
 without a migration, reset or automatic timestamp correction.
 
@@ -227,6 +250,7 @@ investigations there.
 
 ```text
 app.py                       Native Streamlit interface and navigation
+core/presentation.py         Display helpers, data-source scope and queue ordering
 core/models.py               Intake validation, enums and UTC timestamps
 core/url_analysis.py         Offline URL/domain inspection
 core/risk_rules.py           Explainable preliminary category and priority
@@ -254,31 +278,33 @@ official dataset download was unavailable in the development environment.
 
 Executed on Linux with Python 3.12:
 
-- Phase 1 baseline: **156 tests passed**.
-- Updated `python -m pytest -q`: **219 passed, 0 failed, 0 skipped**, including
-  63 new Phase 1 regressions and the 40 unchanged Evaluation tests. Coverage includes
-  UTC conversion and timestamp ordering, supported review pairs, atomic rollback
-  after creation/review failures, safe retries and concurrent sample importers,
-  fresh/repeated loading, upgrade from the original 12, record/evidence preservation,
-  review transitions,
-  JSON structure/field errors, duplicate keys, missing/malformed files, working
-  directory independence, reserved domains, actual rule outputs, export provenance
-  and UI presentation. Invalid records are rejected before any case is inserted.
-  Existing URL, evidence hashing/validation and spreadsheet formula tests also pass.
-- Compared every sample's assessment inputs, stable key, status, verdict and
-  category/priority with the Phase 1 baseline. All remain unchanged. Nine rationale
-  corrections and 100 fictional observation dates are documented in the audit;
-  the fixture checksum was updated after verifying those exact differences.
+- Phase 2 starts from Phase 1 commit `84811cf`, with **219 passing tests**.
+- Updated `python -m pytest -q`: **253 passed, 0 failed, 0 skipped**, including
+  34 additional Phase 2 cases and the 40 unchanged Evaluation tests. Added coverage
+  checks combined source filters, all search fields and sort modes, empty views,
+  full-ID row mapping (including short-ID collisions), retained navigation state,
+  scoped dashboard/chart/CSV/Excel output, timestamp formatting and offset input,
+  stale or invalid Analyze → Preview → Save submissions, and existing evidence
+  presentation. Phase 1 review, sample-loading, timestamp and core regressions
+  remain in the suite.
+- The dataset, schema, rule engine, review validation, evidence storage, reporting
+  and evaluation code are unchanged from the Phase 1 base.
 - `python -m pip check`: no broken requirements.
 - Streamlit startup and local HTTP health check succeeded using isolated data.
-- Chromium exercised sample loading twice, queue filters, direct review navigation,
-  return navigation with retained filters, sample labels, dashboard metrics/chart,
-  and CSV/Excel downloads. No page errors or external HTTP requests occurred.
-  Existing screenshots above remain representative; the UI was not redesigned.
+  After a server restart, a fresh browser session reopened the stored case with
+  its review, notes and evidence preview intact; stored case records were identical.
+- Chromium exercised native table selection, retained queue filters/search,
+  observation-time rejection and saving, review navigation, rejected escalation,
+  review saving, a real local PNG upload/preview, scoped dashboard metrics and
+  CSV/Excel downloads. Downloaded reports preserved full IDs, timestamp precision
+  and evidence references; stored PNG bytes, size and SHA-256 matched the upload.
+  All 102 pre-existing isolated test records remained unchanged, including the
+  100 samples. No page errors or external HTTP requests occurred. The four
+  screenshots above were refreshed from these actual workflows.
 
 A native Windows run and GitHub-hosted CI were not executed in this environment.
-Evidence uploads were covered by automated tests; this pass did not repeat manual
-browser evidence upload or server-restart checks.
+Phase 3 remains separate: external benchmarks and evaluation interpretation,
+lightweight lint tooling, licensing/metadata review and final repository presentation.
 
 ## Limitations
 
