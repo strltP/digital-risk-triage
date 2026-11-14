@@ -5,13 +5,14 @@ from pathlib import Path
 import sqlite3
 from uuid import uuid4
 
-from core.models import CATEGORIES, Intake, PRIORITIES, SOURCES, STATUSES, VERDICTS, utc_now
+from core.models import CATEGORIES, Intake, PRIORITIES, SOURCES, STATUSES, VERDICTS, observation_time, utc_now
 from core.risk_rules import assess
 
 
 class Database:
     def __init__(self, path: str | Path):
         self.path = Path(path)
+        self._transaction_connection: sqlite3.Connection | None = None
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connection() as conn:
             conn.executescript("""
@@ -58,6 +59,10 @@ class Database:
 
     @contextmanager
     def connection(self):
+        if self._transaction_connection is not None:
+            # The outer transaction owns commit, rollback and closing.
+            yield self._transaction_connection
+            return
         conn = sqlite3.connect(self.path, timeout=10)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
@@ -66,6 +71,23 @@ class Database:
                 yield conn
         finally:
             conn.close()
+
+    @contextmanager
+    def transaction(self):
+        """Group public operations on this instance into one atomic write.
+
+        Use a separate Database instance per caller, as the application does.
+        Nested transactions are deliberately unsupported.
+        """
+        if self._transaction_connection is not None:
+            raise RuntimeError("Nested database transactions are not supported.")
+        with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            self._transaction_connection = conn
+            try:
+                yield
+            finally:
+                self._transaction_connection = None
 
     @staticmethod
     def _case(row) -> dict | None:
@@ -76,12 +98,16 @@ class Database:
         result["url_analysis"] = json.loads(result["url_analysis"])
         return result
 
-    def create_case(self, intake: Intake, *, demo_key: str | None = None) -> str:
+    def create_case(self, intake: Intake, *, demo_key: str | None = None,
+                    observed_at: str | None = None) -> str:
+        observed = observation_time(observed_at) if observed_at is not None else None
         intake = intake.validated()
         assessment = assess(intake)
         now = utc_now()
         case_id = "DRT-" + uuid4().hex
         with self.connection() as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             if demo_key:
                 existing = conn.execute("SELECT case_id FROM cases WHERE demo_key = ?", (demo_key,)).fetchone()
                 if existing:
@@ -94,7 +120,7 @@ class Database:
             """, (case_id, intake.source_type, intake.url, intake.brand, intake.official_domain,
                   intake.title, intake.description, intake.notes, assessment.category,
                   assessment.priority, json.dumps(assessment.indicators), assessment.explanation,
-                  json.dumps(assessment.as_dict()["url_analysis"]), now, now, now,
+                  json.dumps(assessment.as_dict()["url_analysis"]), observed or now, now, now,
                   int(demo_key is not None), demo_key))
         return case_id
 
@@ -128,9 +154,14 @@ class Database:
             raise ValueError("False Positive requires a 'No violation found' verdict and supporting notes.")
         if status in ("New", "Reviewing") and verdict == "Confirmed violation":
             raise ValueError("Use Validated when recording a confirmed violation.")
+        if status == "New" and verdict != "Pending review":
+            raise ValueError("New cases require a 'Pending review' verdict.")
+        if verdict == "No violation found" and not notes:
+            raise ValueError("A 'No violation found' verdict requires supporting notes.")
         with self.connection() as conn:
             # Acquire the write lock before reading transition state.
-            conn.execute("BEGIN IMMEDIATE")
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             case = conn.execute("SELECT * FROM cases WHERE case_id = ?", (case_id,)).fetchone()
             if case is None:
                 raise ValueError("Case not found.")

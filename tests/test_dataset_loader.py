@@ -30,14 +30,22 @@ def write_dataset(tmp_path, document):
     return path
 
 
-def test_json_preserves_all_original_scenario_content(document):
+def test_sample_fixture_content_regression(document):
     records = document['cases']
     assert len(records) == len({record['case_key'] for record in records}) == 100
     assert not any({'category', 'priority'} & record.keys() for record in records)
-    # Captured from the Python fixtures before extraction. Protect every key,
-    # input string, review note, intended verdict and record order, not just counts.
+    # Intentional Phase 1 changes are documented in docs/phase-1-audit.md:
+    # nine review rationales and 100 fictional observation times. Keep a strict
+    # checksum and separately protect the unchanged input/status fields and keys.
     digest = hashlib.sha256(json.dumps(records, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
-    assert digest == 'f9d228d3d754a5dc937c726461dc7ddd33122c1f7f16e4c7f8bca1f95a4788cc'
+    assert digest == '0e6aa1543f0f4330569d5da8b8e645b6d14c31977060c6b599c08fbdf847229a'
+    fields = ('case_key', 'source_type', 'url', 'brand', 'official_domain', 'title', 'description',
+              'review_status', 'review_verdict')
+    stable = [{field: record[field] for field in fields} for record in records]
+    assert hashlib.sha256(json.dumps(stable, ensure_ascii=False, sort_keys=True).encode()).hexdigest() == (
+        'b617e0cbf91c78fd30cbbf097b93c2421cfc45613ce426f2e5127af64e440f37')
+    assert hashlib.sha256(json.dumps(sorted(record['case_key'] for record in records)).encode()).hexdigest() == (
+        '4bcdd379c89cb1a54cabec5cd6aff2efb0c89627a4bb86208d2dfa896ed1beb9')
     assert len(read_sample_cases()) == 100
 
 
@@ -132,3 +140,32 @@ def test_missing_malformed_or_unreadable_json(content, message, db, tmp_path):
     with pytest.raises(DatasetError, match=message):
         load_sample_dataset(db, path)
     assert db.list_cases() == before
+
+
+@pytest.mark.parametrize('value', ['', 'not a timestamp', '2025-01-06T08:00:00',
+                                  '2099-01-01T00:00:00Z', '0001-01-01T00:00:00+01:00', None, 123])
+def test_invalid_observation_time_rejected_before_import(value, document, db, tmp_path):
+    document['cases'][-1]['observed_at'] = value
+    before = db.list_cases()
+    with pytest.raises(DatasetError, match='Sample case 100:'):
+        load_sample_dataset(db, write_dataset(tmp_path, document))
+    assert db.list_cases() == before
+
+
+def test_legacy_json_without_observation_times_is_supported(document, db, tmp_path):
+    for record in document['cases']:
+        record.pop('observed_at')
+    path = write_dataset(tmp_path, document)
+    assert all(case.observed_at is None for case in read_sample_cases(path))
+    assert load_sample_dataset(db, path) == 100
+    for case in db.list_cases():
+        assert case['observed_at'] == case['created_at']
+
+
+def test_json_observation_time_is_normalized_to_utc(document, db, tmp_path):
+    document['cases'][0]['observed_at'] = '2025-01-06T15:00:00+07:00'
+    path = write_dataset(tmp_path, document)
+    assert read_sample_cases(path)[0].observed_at == '2025-01-06T08:00:00+00:00'
+    assert load_sample_dataset(db, path) == 100
+    case = next(case for case in db.list_cases() if case['demo_key'] == 'demo-v1-01')
+    assert case['observed_at'] == '2025-01-06T08:00:00+00:00'

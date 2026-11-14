@@ -19,15 +19,21 @@ def utc_now() -> str:
 
 
 def observation_time(value: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError("Enter an ISO 8601 observation timestamp with a timezone.")
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except (ValueError, TypeError) as exc:
         raise ValueError("Enter an ISO 8601 observation timestamp with a timezone.") from exc
     if parsed.tzinfo is None:
         raise ValueError("Observation timestamp must include a timezone, for example +00:00.")
-    if parsed > datetime.now(timezone.utc):
+    try:
+        normalized = parsed.astimezone(timezone.utc)
+    except (ValueError, OverflowError) as exc:
+        raise ValueError("Observation timestamp is outside the supported UTC date range.") from exc
+    if normalized > datetime.now(timezone.utc):
         raise ValueError("Observation timestamp cannot be in the future.")
-    return parsed.astimezone(timezone.utc).isoformat()
+    return normalized.isoformat()
 
 
 @dataclass(frozen=True)

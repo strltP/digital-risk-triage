@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from core.database import Database
-from core.models import Intake, STATUSES, VERDICTS
+from core.models import Intake, STATUSES, VERDICTS, observation_time
 from core.url_analysis import analyze_url
 
 DEFAULT_DATASET = Path(__file__).resolve().parents[1] / "datasets" / "sample_cases.json"
@@ -37,12 +37,13 @@ class SampleCase:
     intake: Intake
     status: str
     verdict: str
+    observed_at: str | None = None
 
 
 def _validate_case(record: dict) -> SampleCase:
     if not isinstance(record, dict):
         raise ValueError("Each case must be an object.")
-    missing, extra = CASE_FIELDS - record.keys(), record.keys() - CASE_FIELDS
+    missing, extra = CASE_FIELDS - record.keys(), record.keys() - (CASE_FIELDS | {"observed_at"})
     if missing or extra:
         raise ValueError(f"Missing fields: {', '.join(sorted(missing)) or 'none'}; "
                          f"unsupported fields: {', '.join(sorted(extra)) or 'none'}.")
@@ -68,7 +69,8 @@ def _validate_case(record: dict) -> SampleCase:
     analysis = analyze_url(intake.url, intake.official_domain)
     if not analysis.hostname.endswith(".example"):
         raise ValueError("Sample URLs must use reserved .example domains.")
-    return SampleCase(key, intake, status, verdict)
+    observed = observation_time(record["observed_at"]) if "observed_at" in record else None
+    return SampleCase(key, intake, status, verdict, observed)
 
 
 def read_sample_cases(path: str | Path | None = None) -> list[SampleCase]:
@@ -106,16 +108,17 @@ def read_sample_cases(path: str | Path | None = None) -> list[SampleCase]:
 def load_sample_dataset(db: Database, path: str | Path | None = None) -> int:
     """Seed only missing stable keys; preserve all existing cases and evidence."""
     cases = read_sample_cases(path)  # Validate every record before the first write.
-    with db.connection() as conn:
-        existing = {row[0] for row in conn.execute("SELECT demo_key FROM cases WHERE demo_key IS NOT NULL")}
     inserted = 0
-    for case in cases:
-        if case.key in existing:
-            continue
-        case_id = db.create_case(case.intake, demo_key=case.key)
-        if case.status == "Escalated":
-            db.update_review(case_id, notes=case.intake.notes, status="Validated", verdict=case.verdict)
-        if case.status != "New":
-            db.update_review(case_id, notes=case.intake.notes, status=case.status, verdict=case.verdict)
-        inserted += 1
+    with db.transaction():
+        with db.connection() as conn:
+            existing = {row[0] for row in conn.execute("SELECT demo_key FROM cases WHERE demo_key IS NOT NULL")}
+        for case in cases:
+            if case.key in existing:
+                continue
+            case_id = db.create_case(case.intake, demo_key=case.key, observed_at=case.observed_at)
+            if case.status == "Escalated":
+                db.update_review(case_id, notes=case.intake.notes, status="Validated", verdict=case.verdict)
+            if case.status != "New":
+                db.update_review(case_id, notes=case.intake.notes, status=case.status, verdict=case.verdict)
+            inserted += 1
     return inserted

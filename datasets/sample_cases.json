@@ -1,6 +1,6 @@
 {
   "dataset_version": "1.0",
-  "description": "Synthetic digital risk investigation scenarios; all brands and review outcomes are fictional.",
+  "description": "Synthetic digital risk investigation scenarios; all brands, observation times and review outcomes are fictional.",
   "cases": [
     {
       "case_key": "demo-v1-01",
@@ -12,7 +12,8 @@
       "description": "Verify your account. Enter your password within 2 hours.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-06T08:00:00Z"
     },
     {
       "case_key": "demo-v1-02",
@@ -24,7 +25,8 @@
       "description": "Account suspended. Provide your one-time code. Pay now to unlock.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-06T20:00:00Z"
     },
     {
       "case_key": "demo-v1-03",
@@ -36,7 +38,8 @@
       "description": "Astervale official outlet for customer support.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-07T08:00:00Z"
     },
     {
       "case_key": "demo-v1-04",
@@ -48,7 +51,8 @@
       "description": "Lumifern authorized dealer. Affiliation requires checking.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Checking claimed authorization; no verdict yet."
+      "review_notes": "Checking claimed authorization; no verdict yet.",
+      "observed_at": "2025-01-07T20:00:00Z"
     },
     {
       "case_key": "demo-v1-05",
@@ -60,7 +64,8 @@
       "description": "Velora Works replica bag, 1:1 copy.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-08T08:00:00Z"
     },
     {
       "case_key": "demo-v1-06",
@@ -72,7 +77,8 @@
       "description": "Northpetal knock-off jacket; authenticity unverified.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-08T20:00:00Z"
     },
     {
       "case_key": "demo-v1-07",
@@ -84,7 +90,8 @@
       "description": "Velora Works copied logo on unrelated merchandise; rights unknown.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-09T08:00:00Z"
     },
     {
       "case_key": "demo-v1-08",
@@ -96,7 +103,8 @@
       "description": "Northpetal unauthorized trademark on printed goods, reported by submitter.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-09T20:00:00Z"
     },
     {
       "case_key": "demo-v1-09",
@@ -108,7 +116,8 @@
       "description": "Verify your account. Enter your password on the usual sign-in page.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "Official login matches fictional internal records. Credential language alone is not a violation."
+      "review_notes": "Official login matches fictional internal records. Credential language alone is not a violation.",
+      "observed_at": "2025-01-10T08:00:00Z"
     },
     {
       "case_key": "demo-v1-10",
@@ -120,7 +129,8 @@
       "description": "How to recognize a Velora Works replica or counterfeit bag. Educational warning.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "Educational warning, not a sale. Keyword rules lack context; no violation found."
+      "review_notes": "Educational warning, not a sale. Keyword rules lack context; no violation found.",
+      "observed_at": "2025-01-10T20:00:00Z"
     },
     {
       "case_key": "demo-v1-11",
@@ -132,7 +142,8 @@
       "description": "Astervale official outlet. Dealer authorization provided for review.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The exercise includes dealer authorization. A similar domain and affiliation claim were not proof."
+      "review_notes": "The exercise includes dealer authorization. A similar domain and affiliation claim were not proof.",
+      "observed_at": "2025-01-11T08:00:00Z"
     },
     {
       "case_key": "demo-v1-12",
@@ -144,7 +155,8 @@
       "description": "Great deals on Lumifern quality products. Seasonal catalogue.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-11T20:00:00Z"
     },
     {
       "case_key": "demo-v2-mail-quota",
@@ -156,7 +168,8 @@
       "description": "Astervale mailbox full: verify your account and enter your password within 2 hours.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-12T08:00:00Z"
     },
     {
       "case_key": "demo-v2-loyalty-otp",
@@ -168,7 +181,8 @@
       "description": "Lumifern rewards expire tonight. Provide your OTP within 15 minutes to keep the balance.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Check whether the message was solicited; the exercise has no message headers."
+      "review_notes": "Check whether the message was solicited; the exercise has no message headers.",
+      "observed_at": "2025-01-12T20:00:00Z"
     },
     {
       "case_key": "demo-v2-order-card",
@@ -180,7 +194,8 @@
       "description": "Velora Works parcel is held. Submit your card details and pay now for release.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The exercise describes an unrelated seller requesting payment details outside checkout; record the scoped violation."
+      "review_notes": "Within this fictional exercise, marketplace policy prohibits sellers from soliciting card details directly, and the described message asks the buyer to send those details outside checkout. Review records that specific policy violation, rather than inferring a completed theft from the preliminary phishing category. No payment test or seller contact occurred.",
+      "observed_at": "2025-01-13T08:00:00Z"
     },
     {
       "case_key": "demo-v2-staff-sso",
@@ -192,7 +207,8 @@
       "description": "Northpetal staff: security verification required. Enter your login credentials to migrate access.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "Fictional review confirms the described credential collection outside the staff portal; escalate the training case for containment discussion."
+      "review_notes": "The exercise stipulates that staff did not request a migration and that the form is controlled by an unaffiliated credential collector, not an approved identity provider. That fictional context supports the phishing finding; an outside domain alone would not. The sample decision is validated before escalation for containment planning. No sign-in attempt or provider check occurred.",
+      "observed_at": "2025-01-13T20:00:00Z"
     },
     {
       "case_key": "demo-v2-refund-unlock",
@@ -204,7 +220,8 @@
       "description": "Astervale refund awaiting release: account locked. Provide your credit card to unlock funds.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-14T08:00:00Z"
     },
     {
       "case_key": "demo-v2-warranty-password",
@@ -216,7 +233,8 @@
       "description": "Lumifern warranty ends today. Enter your password within 30 minutes to renew coverage.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-14T20:00:00Z"
     },
     {
       "case_key": "demo-v2-delivery-otp",
@@ -228,7 +246,8 @@
       "description": "Velora Works delivery failed. Share your one-time code within 10 minutes to select a new slot.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Distinguish a delivery reference from a sign-in code before reaching a finding."
+      "review_notes": "Distinguish a delivery reference from a sign-in code before reaching a finding.",
+      "observed_at": "2025-01-15T08:00:00Z"
     },
     {
       "case_key": "demo-v2-membership-suspension",
@@ -240,7 +259,8 @@
       "description": "Northpetal account suspended. Submit your password in this appeal form.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The scenario specifies an unsolicited request for the member password; fictional review records a violation of the exercise policy."
+      "review_notes": "The scenario specifies an unsolicited request for the member password; fictional review records a violation of the exercise policy.",
+      "observed_at": "2025-01-15T20:00:00Z"
     },
     {
       "case_key": "demo-v2-supplier-transfer",
@@ -252,7 +272,8 @@
       "description": "Astervale supplier account locked. Urgent payment by wire transfer is requested.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Payment pressure and suspension language warrant checking the invoice through a known contact; no credentials are described."
+      "review_notes": "Payment pressure and suspension language warrant checking the invoice through a known contact; no credentials are described.",
+      "observed_at": "2025-01-16T08:00:00Z"
     },
     {
       "case_key": "demo-v2-payout-hold",
@@ -264,7 +285,8 @@
       "description": "Lumifern seller payout: verify your identity and send payment to remove the hold.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-16T20:00:00Z"
     },
     {
       "case_key": "demo-v2-qr-login",
@@ -276,7 +298,8 @@
       "description": "Velora Works security verification: enter your password after scanning the replacement code.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "Within the fictional exercise the replacement page collects reusable credentials; validated before referral for response planning."
+      "review_notes": "In the fictional exercise the replacement QR page is controlled by an unaffiliated recipient and captures the user's reusable password instead of handing sign-in to the approved service. This stipulated collection, rather than the QR format or priority, supports the finding. The sample decision is validated before escalation for response planning; no code was scanned or credentials submitted.",
+      "observed_at": "2025-01-17T08:00:00Z"
     },
     {
       "case_key": "demo-v2-survey-card",
@@ -288,7 +311,8 @@
       "description": "Northpetal prize claim asks you to submit your card details. Pay now for reward delivery.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-17T20:00:00Z"
     },
     {
       "case_key": "demo-v2-tender-login",
@@ -300,7 +324,8 @@
       "description": "Astervale tender documents: enter your login credentials to download the brief.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Only a credential request is described; establish who operates the document portal."
+      "review_notes": "Only a credential request is described; establish who operates the document portal.",
+      "observed_at": "2025-01-18T08:00:00Z"
     },
     {
       "case_key": "demo-v2-points-balance",
@@ -312,7 +337,8 @@
       "description": "Lumifern points recovery asks members to confirm your password before displaying the balance.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-18T20:00:00Z"
     },
     {
       "case_key": "demo-v2-return-code",
@@ -324,7 +350,8 @@
       "description": "Velora Works return approval: provide your OTP to the seller in chat.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional seller explicitly requests the buyer's sign-in OTP; review records that narrow violation without claiming live verification."
+      "review_notes": "The fictional seller explicitly requests the buyer's sign-in OTP; review records that narrow violation without claiming live verification.",
+      "observed_at": "2025-01-19T08:00:00Z"
     },
     {
       "case_key": "demo-v2-community-access",
@@ -336,7 +363,8 @@
       "description": "Northpetal club account suspended. Share your password with the moderator to restore access.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-19T20:00:00Z"
     },
     {
       "case_key": "demo-v2-invoice-password",
@@ -348,7 +376,8 @@
       "description": "Astervale billing archive asks recipients to enter your password to view a supplier invoice.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Determine whether this asks for an archive password or an account secret; context remains incomplete."
+      "review_notes": "Determine whether this asks for an archive password or an account secret; context remains incomplete.",
+      "observed_at": "2025-01-20T08:00:00Z"
     },
     {
       "case_key": "demo-v2-official-otp",
@@ -360,7 +389,8 @@
       "description": "Lumifern sign-in asks you to provide your OTP on the configured account page.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The fictional user initiated this sign-in on the configured host; the expected OTP challenge alone is not a violation."
+      "review_notes": "The fictional user initiated this sign-in on the configured host; the expected OTP challenge alone is not a violation.",
+      "observed_at": "2025-01-20T20:00:00Z"
     },
     {
       "case_key": "demo-v2-bulk-order-deposit",
@@ -372,7 +402,8 @@
       "description": "Velora Works wholesale reservation: verify your account and pay within 2 hours to retain stock.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "No account secret is requested; establish whether the deposit terms and seller relationship are legitimate."
+      "review_notes": "No account secret is requested; establish whether the deposit terms and seller relationship are legitimate.",
+      "observed_at": "2025-01-21T08:00:00Z"
     },
     {
       "case_key": "demo-v2-shared-project",
@@ -384,7 +415,8 @@
       "description": "Northpetal workspace invitation: verify your account and submit your login credentials.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The exercise places the invitation on an unrelated credential-collection host; fictional review confirms the described misuse."
+      "review_notes": "The exercise stipulates that the sender has no relationship with Northpetal and that the invitation form collects reusable account credentials for the sender instead of authenticating with an approved service. That fictional context supports the credential-harvesting finding; an outside document-sharing host alone would remain inconclusive. No form was opened, credentials submitted or external verification performed.",
+      "observed_at": "2025-01-21T20:00:00Z"
     },
     {
       "case_key": "demo-v2-device-registration",
@@ -396,7 +428,8 @@
       "description": "Astervale device approval: enter your one-time password within 5 minutes to prevent removal.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-22T08:00:00Z"
     },
     {
       "case_key": "demo-v2-profile-copyright",
@@ -408,7 +441,8 @@
       "description": "Lumifern profile account suspended. Confirm your password to appeal the restriction.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional moderation notice directs the recipient to disclose a password; validation precedes escalation for the exercise."
+      "review_notes": "Within the fictional exercise an unaffiliated sender uses a moderation pretext to request the recipient's password for collection outside an approved sign-in flow. That stated context supports the finding, rather than the appeal wording or High priority alone. The sample decision is validated before escalation for response planning; no real moderation notice or account was checked.",
+      "observed_at": "2025-01-22T20:00:00Z"
     },
     {
       "case_key": "demo-v2-astervale-typo",
@@ -420,7 +454,8 @@
       "description": "Astervale catalogue mirror lists seasonal stock under a double-letter domain.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-23T08:00:00Z"
     },
     {
       "case_key": "demo-v2-lumifern-digit",
@@ -432,7 +467,8 @@
       "description": "Lumifern help centre appears on a domain with a compressed final letter pair.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Compare the displayed address with brand-supplied domain records before attributing ownership."
+      "review_notes": "Compare the displayed address with brand-supplied domain records before attributing ownership.",
+      "observed_at": "2025-01-23T20:00:00Z"
     },
     {
       "case_key": "demo-v2-velora-swap",
@@ -444,7 +480,8 @@
       "description": "Velora Works collection uses a transposed spelling in the hostname.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "In the fictional exercise, the site operator admits using a confusing address to divert shoppers; no live ownership check is implied."
+      "review_notes": "In the fictional exercise, the site operator admits using a confusing address to divert shoppers; no live ownership check is implied.",
+      "observed_at": "2025-01-24T08:00:00Z"
     },
     {
       "case_key": "demo-v2-northpetal-missing",
@@ -456,7 +493,8 @@
       "description": "Northpetal stock finder appears under a hostname missing one vowel.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-24T20:00:00Z"
     },
     {
       "case_key": "demo-v2-astervale-support-profile",
@@ -468,7 +506,8 @@
       "description": "Astervale official support replies to public delivery complaints from a newly reported profile.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Request the profile's authorization history and compare with the listed support channels."
+      "review_notes": "Request the profile's authorization history and compare with the listed support channels.",
+      "observed_at": "2025-01-25T08:00:00Z"
     },
     {
       "case_key": "demo-v2-lumifern-service-chat",
@@ -480,7 +519,8 @@
       "description": "Lumifern official support chat advertises assistance with subscription changes.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "Fictional review establishes that the chat operator has no authority to claim support status; validated then referred for outreach planning."
+      "review_notes": "Fictional review establishes that the chat operator has no authority to claim support status; validated then referred for outreach planning.",
+      "observed_at": "2025-01-25T20:00:00Z"
     },
     {
       "case_key": "demo-v2-velora-social-store",
@@ -492,7 +532,8 @@
       "description": "Velora Works official store claims its social profile replaces the usual sales channel.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-26T08:00:00Z"
     },
     {
       "case_key": "demo-v2-northpetal-dealer",
@@ -504,7 +545,8 @@
       "description": "Northpetal authorized dealer badge appears on a seller's shop header.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The exercise includes a valid dealer agreement for this shop; the preliminary affiliation flag is resolved as authorized."
+      "review_notes": "The exercise includes a valid dealer agreement for this shop; the preliminary affiliation flag is resolved as authorized.",
+      "observed_at": "2025-01-26T20:00:00Z"
     },
     {
       "case_key": "demo-v2-astervale-partner",
@@ -516,7 +558,8 @@
       "description": "Astervale official partner listing offers installation services.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Check the scope and expiry of the claimed partner agreement rather than inferring affiliation from the listing."
+      "review_notes": "Check the scope and expiry of the claimed partner agreement rather than inferring affiliation from the listing.",
+      "observed_at": "2025-01-27T08:00:00Z"
     },
     {
       "case_key": "demo-v2-lumifern-domain-placement",
@@ -528,7 +571,8 @@
       "description": "Lumifern benefits information is presented under a hostname containing the brand domain.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-27T20:00:00Z"
     },
     {
       "case_key": "demo-v2-velora-reseller",
@@ -540,7 +584,8 @@
       "description": "Velora Works authorized reseller claim appears alongside regional shipping rates.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional reseller agreement is explicitly absent in the scenario and the operator claims exclusive authorization; review records misleading affiliation."
+      "review_notes": "Within the fictional exercise, the reseller is explicitly stipulated to have no dealer authorization and to know its authorization claim is false. That context supports the misleading affiliation finding; a missing agreement or outside domain alone would remain inconclusive. No reseller contact or external rights check occurred.",
+      "observed_at": "2025-01-28T08:00:00Z"
     },
     {
       "case_key": "demo-v2-northpetal-service-event",
@@ -552,7 +597,8 @@
       "description": "Northpetal official support promotes a temporary repair event.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-28T20:00:00Z"
     },
     {
       "case_key": "demo-v2-astervale-wholesale",
@@ -564,7 +610,8 @@
       "description": "Astervale official outlet says wholesale orders now use this marketplace vendor.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "Fictional review confirms the vendor invented its outlet relationship; validate the sample finding before referring the case."
+      "review_notes": "Fictional review confirms the vendor invented its outlet relationship; validate the sample finding before referring the case.",
+      "observed_at": "2025-01-29T08:00:00Z"
     },
     {
       "case_key": "demo-v2-lumifern-affiliate-directory",
@@ -576,7 +623,8 @@
       "description": "Event organizer says it is affiliated with Lumifern for a prize programme.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Separate a sponsorship claim from ordinary brand reference; authorization is unresolved in this scenario."
+      "review_notes": "Separate a sponsorship claim from ordinary brand reference; authorization is unresolved in this scenario.",
+      "observed_at": "2025-01-29T20:00:00Z"
     },
     {
       "case_key": "demo-v2-velora-outlet",
@@ -588,7 +636,8 @@
       "description": "Velora Works official outlet displays end-of-season stock without an authorization reference.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-01-30T08:00:00Z"
     },
     {
       "case_key": "demo-v2-northpetal-typo",
@@ -600,7 +649,8 @@
       "description": "Northpetal storefront appears under a repeated final letter.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "A similar hostname warrants investigation; it does not establish the operator's intent."
+      "review_notes": "A similar hostname warrants investigation; it does not establish the operator's intent.",
+      "observed_at": "2025-01-30T20:00:00Z"
     },
     {
       "case_key": "demo-v2-astervale-care-directory",
@@ -612,7 +662,8 @@
       "description": "Astervale official support listing routes enquiries through a directory contact form.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The fictional directory entry is a contracted support listing with permission; close the affiliation flag."
+      "review_notes": "The fictional directory entry is a contracted support listing with permission; close the affiliation flag.",
+      "observed_at": "2025-01-31T08:00:00Z"
     },
     {
       "case_key": "demo-v2-lumifern-fan-shop",
@@ -624,7 +675,8 @@
       "description": "Lumifern fan group changes its description to Lumifern official store.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional group operator acknowledges that the new official-store claim is unauthorized; record the misleading change."
+      "review_notes": "The fictional group operator acknowledges that the new official-store claim is unauthorized; record the misleading change.",
+      "observed_at": "2025-01-31T20:00:00Z"
     },
     {
       "case_key": "demo-v2-velora-domain-placement",
@@ -636,7 +688,8 @@
       "description": "Velora Works collection header repeats the brand address inside a separate host.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-01T08:00:00Z"
     },
     {
       "case_key": "demo-v2-northpetal-reseller-profile",
@@ -648,7 +701,8 @@
       "description": "Northpetal authorized reseller profile solicits bulk-order enquiries.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Request documentation of regional reseller authority and its permitted product range."
+      "review_notes": "Request documentation of regional reseller authority and its permitted product range.",
+      "observed_at": "2025-02-01T20:00:00Z"
     },
     {
       "case_key": "demo-v2-astervale-official-mirror",
@@ -660,7 +714,8 @@
       "description": "Astervale official website mirror says the primary catalogue is unavailable.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "Within this fictional exercise the operator copied the catalogue and invented official status; escalate only after sample validation."
+      "review_notes": "Within this fictional exercise the operator copied the catalogue and invented official status; escalate only after sample validation.",
+      "observed_at": "2025-02-02T08:00:00Z"
     },
     {
       "case_key": "demo-v2-lumifern-partner-booking",
@@ -672,7 +727,8 @@
       "description": "Lumifern official partner offers paid product consultations through a booking desk.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-02T20:00:00Z"
     },
     {
       "case_key": "demo-v2-replica-travel-case",
@@ -684,7 +740,8 @@
       "description": "Velora Works replica travel case with matching luggage tag; seller offers bulk packs.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-03T08:00:00Z"
     },
     {
       "case_key": "demo-v2-imitation-trainers",
@@ -696,7 +753,8 @@
       "description": "Northpetal knock-off trainers described as a low-cost alternative to the original.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Compare the seller description with branding and product identifiers before deciding."
+      "review_notes": "Compare the seller description with branding and product identifiers before deciding.",
+      "observed_at": "2025-02-03T20:00:00Z"
     },
     {
       "case_key": "demo-v2-copy-watch",
@@ -708,7 +766,8 @@
       "description": "Astervale 1:1 copy watch described as indistinguishable from authentic stock.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional listing explicitly sells a branded copy as authentic; review confirms that scoped marketplace violation."
+      "review_notes": "The exercise stipulates that the seller applied Astervale branding to an unauthorized copy. The offer's 'indistinguishable from authentic stock' wording raised a provenance concern, but does not by itself establish a claim of genuine origin. The fictional finding concerns the stipulated unauthorized branded copy; no product inspection or authenticity test occurred.",
+      "observed_at": "2025-02-04T08:00:00Z"
     },
     {
       "case_key": "demo-v2-replica-headphones",
@@ -720,7 +779,8 @@
       "description": "Lumifern replica headphones offered in packaging described as original.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-04T20:00:00Z"
     },
     {
       "case_key": "demo-v2-reproduction-scarf",
@@ -732,7 +792,8 @@
       "description": "Velora Works counterfeit scarf advertised with factory-style labels.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional seller states the branded goods are counterfeit; validate the sample finding before referral for seller review."
+      "review_notes": "The fictional seller states the branded goods are counterfeit; validate the sample finding before referral for seller review.",
+      "observed_at": "2025-02-05T08:00:00Z"
     },
     {
       "case_key": "demo-v2-knockoff-boots",
@@ -744,7 +805,8 @@
       "description": "Northpetal knockoff boots offered as leftover warehouse stock.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Warehouse wording does not establish provenance; inspect identifiers and the seller's supply explanation."
+      "review_notes": "Warehouse wording does not establish provenance; inspect identifiers and the seller's supply explanation.",
+      "observed_at": "2025-02-05T20:00:00Z"
     },
     {
       "case_key": "demo-v2-fake-designer-wallet",
@@ -756,7 +818,8 @@
       "description": "Astervale fake designer wallet with an optional branded gift box.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-06T08:00:00Z"
     },
     {
       "case_key": "demo-v2-replica-speaker",
@@ -768,7 +831,8 @@
       "description": "Lumifern 1:1 copy portable speaker advertised as a genuine replacement.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional description admits a copy while claiming genuine origin; document that inconsistency as the sample finding."
+      "review_notes": "The fictional description admits a copy while claiming genuine origin; document that inconsistency as the sample finding.",
+      "observed_at": "2025-02-06T20:00:00Z"
     },
     {
       "case_key": "demo-v2-replica-belt",
@@ -780,7 +844,8 @@
       "description": "Velora Works replica belt sold with a logo buckle and spare strap.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-07T08:00:00Z"
     },
     {
       "case_key": "demo-v2-counterfeit-patch",
@@ -792,7 +857,8 @@
       "description": "Northpetal counterfeit garment patches sold by the hundred.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Assess whether these are replacement parts, descriptive references or unauthorized branded stock."
+      "review_notes": "Assess whether these are replacement parts, descriptive references or unauthorized branded stock.",
+      "observed_at": "2025-02-07T20:00:00Z"
     },
     {
       "case_key": "demo-v2-copy-sunglasses",
@@ -804,7 +870,8 @@
       "description": "Astervale 1:1 copy sunglasses with a seller-issued authenticity card.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The exercise specifies the seller made both the copy and its authenticity card; sample validation precedes referral."
+      "review_notes": "The exercise specifies the seller made both the copy and its authenticity card; sample validation precedes referral.",
+      "observed_at": "2025-02-08T08:00:00Z"
     },
     {
       "case_key": "demo-v2-replica-charger",
@@ -816,7 +883,8 @@
       "description": "Lumifern replica charger uses retail-style packaging and a deep discount.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-08T20:00:00Z"
     },
     {
       "case_key": "demo-v2-counterfeit-luggage",
@@ -828,7 +896,8 @@
       "description": "Velora Works counterfeit cabin luggage sold as surplus inventory.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional seller acknowledges unauthorized branded copies; record the marketplace claim rather than infer anything about real goods."
+      "review_notes": "The fictional seller acknowledges unauthorized branded copies; record the marketplace claim rather than infer anything about real goods.",
+      "observed_at": "2025-02-09T08:00:00Z"
     },
     {
       "case_key": "demo-v2-educational-knitwear",
@@ -840,7 +909,8 @@
       "description": "Northpetal replica knitwear examples appear in an educational guide; nothing is offered for sale.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The exercise describes an educational guide rather than a product offer; counterfeit keywords lack that context."
+      "review_notes": "The exercise describes an educational guide rather than a product offer; counterfeit keywords lack that context.",
+      "observed_at": "2025-02-09T20:00:00Z"
     },
     {
       "case_key": "demo-v2-wallet-warning",
@@ -852,7 +922,8 @@
       "description": "Astervale counterfeit wallet warning explains how buyers can report misleading offers.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "This fictional buyer-protection notice warns against copies and offers no goods; resolve the keyword false positive."
+      "review_notes": "This fictional buyer-protection notice warns against copies and offers no goods; resolve the keyword false positive.",
+      "observed_at": "2025-02-10T08:00:00Z"
     },
     {
       "case_key": "demo-v2-headset-repair-guide",
@@ -864,7 +935,8 @@
       "description": "Lumifern replica ear pads are discussed in a repair guide that compares materials.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Clarify whether a linked parts offer uses protected branding; the discussion alone is insufficient."
+      "review_notes": "Clarify whether a linked parts offer uses protected branding; the discussion alone is insufficient.",
+      "observed_at": "2025-02-10T20:00:00Z"
     },
     {
       "case_key": "demo-v2-knockoff-keyring",
@@ -876,7 +948,8 @@
       "description": "Velora Works knock-off keyrings offered with unverified authenticity assurances.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-11T08:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-delivery-van",
@@ -888,7 +961,8 @@
       "description": "Astervale copied logo appears on an unrelated delivery van in a promotional gallery.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Confirm who operates the van and whether there is a permitted service relationship."
+      "review_notes": "Confirm who operates the van and whether there is a permitted service relationship.",
+      "observed_at": "2025-02-11T20:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-event-badge",
@@ -900,7 +974,8 @@
       "description": "Lumifern unauthorized logo appears on a night-market event badge.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-12T08:00:00Z"
     },
     {
       "case_key": "demo-v2-mark-ceramic-cups",
@@ -912,7 +987,8 @@
       "description": "Velora Works unauthorized trademark is printed on handmade ceramic cups.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional maker acknowledges printing the protected mark without permission; the sample finding concerns that use."
+      "review_notes": "The fictional maker acknowledges printing the protected mark without permission; the sample finding concerns that use.",
+      "observed_at": "2025-02-12T20:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-fitness-flyer",
@@ -924,7 +1000,8 @@
       "description": "Northpetal copied logo is used on a local fitness-class flyer.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "The flyer may imply sponsorship; establish the permission and the intended association."
+      "review_notes": "The flyer may imply sponsorship; establish the permission and the intended association.",
+      "observed_at": "2025-02-13T08:00:00Z"
     },
     {
       "case_key": "demo-v2-mark-course-certificate",
@@ -936,7 +1013,8 @@
       "description": "Astervale trademark misuse is alleged in a third-party course certificate template.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-13T20:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-sticker-packs",
@@ -948,7 +1026,8 @@
       "description": "Lumifern copied trademark is offered on decorative sticker sheets.",
       "review_status": "Escalated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The exercise establishes reproduction without a licence; validate the sample review before referring the repeated offers."
+      "review_notes": "The exercise establishes reproduction without a licence; validate the sample review before referring the repeated offers.",
+      "observed_at": "2025-02-14T08:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-hotel-menu",
@@ -960,7 +1039,8 @@
       "description": "Velora Works unauthorized logo appears beside a lounge menu's sponsor heading.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-14T20:00:00Z"
     },
     {
       "case_key": "demo-v2-mark-fundraiser-shirts",
@@ -972,7 +1052,8 @@
       "description": "Northpetal copied logo is printed on shirts promoted for a community fundraiser.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Charitable intent alone does not resolve licensing; request the campaign's permission terms."
+      "review_notes": "Charitable intent alone does not resolve licensing; request the campaign's permission terms.",
+      "observed_at": "2025-02-15T08:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-workshop-slides",
@@ -984,7 +1065,8 @@
       "description": "Astervale copied logo appears in a slide discussing visual identity design.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The fictional workshop has permission for attributed teaching use; close the context-insensitive logo flag."
+      "review_notes": "The fictional workshop has permission for attributed teaching use; close the context-insensitive logo flag.",
+      "observed_at": "2025-02-15T20:00:00Z"
     },
     {
       "case_key": "demo-v2-mark-conference-lanyard",
@@ -996,7 +1078,8 @@
       "description": "Lumifern unauthorized trademark is used on conference lanyards sold by an unrelated printer.",
       "review_status": "Validated",
       "review_verdict": "Confirmed violation",
-      "review_notes": "The fictional printer confirms it applied the mark without a licence; review is limited to that described use."
+      "review_notes": "The fictional printer confirms it applied the mark without a licence; review is limited to that described use.",
+      "observed_at": "2025-02-16T08:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-mural",
@@ -1008,7 +1091,8 @@
       "description": "Velora Works copied logo is included in a shop mural promoted online.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-16T20:00:00Z"
     },
     {
       "case_key": "demo-v2-mark-gift-wrap",
@@ -1020,7 +1104,8 @@
       "description": "Northpetal unauthorized trademark appears in a repeating gift-wrap pattern.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Check the licensing arrangement and whether the pattern is descriptive or source-identifying."
+      "review_notes": "Check the licensing arrangement and whether the pattern is descriptive or source-identifying.",
+      "observed_at": "2025-02-17T08:00:00Z"
     },
     {
       "case_key": "demo-v2-logo-licensed-display",
@@ -1032,7 +1117,8 @@
       "description": "Astervale copied logo is shown in a portfolio of commissioned retail displays.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The exercise supplies a display-artwork licence covering this portfolio use; permission resolves the preliminary flag."
+      "review_notes": "The exercise supplies a display-artwork licence covering this portfolio use; permission resolves the preliminary flag.",
+      "observed_at": "2025-02-17T20:00:00Z"
     },
     {
       "case_key": "demo-v2-official-size-guide",
@@ -1044,7 +1130,8 @@
       "description": "Northpetal publishes garment measurements and routine fitting advice.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The fictional submission concerns routine product information on the configured host; no violation is described."
+      "review_notes": "Fictional sample intake: a reporter queried whether the sizing page was an unauthorized brand copy. The exercise identifies it as Northpetal's own measurement guide, with routine fitting information and no product offer or request for sensitive data in the supplied description. Review clears the specific copying concern under that authorized-page context; no live website or permission check occurred.",
+      "observed_at": "2025-02-18T08:00:00Z"
     },
     {
       "case_key": "demo-v2-history-essay",
@@ -1056,7 +1143,8 @@
       "description": "An essay discusses Astervale packaging history and credits its reference sources.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-18T20:00:00Z"
     },
     {
       "case_key": "demo-v2-benign-password-path",
@@ -1068,7 +1156,8 @@
       "description": "Lumifern explains where members can find account recovery settings; this page has no input form.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The suspicious-looking URL keyword names a help topic; the described article requests no account secret."
+      "review_notes": "The suspicious-looking URL keyword names a help topic; the described article requests no account secret.",
+      "observed_at": "2025-02-19T08:00:00Z"
     },
     {
       "case_key": "demo-v2-normal-resale",
@@ -1080,7 +1169,8 @@
       "description": "Used Velora Works canvas bag with dimensions, wear details and a stated resale price.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "Ordinary resale wording provides no provenance by itself; request product details if the original concern remains."
+      "review_notes": "Ordinary resale wording provides no provenance by itself; request product details if the original concern remains.",
+      "observed_at": "2025-02-19T20:00:00Z"
     },
     {
       "case_key": "demo-v2-unbranded-comparison",
@@ -1092,7 +1182,8 @@
       "description": "A product journal compares Northpetal jacket weight and pocket layouts with other fictional designs.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-20T08:00:00Z"
     },
     {
       "case_key": "demo-v2-authorized-official-store",
@@ -1104,7 +1195,8 @@
       "description": "Astervale official store lists seasonal collections and normal delivery terms.",
       "review_status": "False Positive",
       "review_verdict": "No violation found",
-      "review_notes": "The fictional submission points to the configured store and describes no misleading conduct; host matching alone is not a safety guarantee."
+      "review_notes": "Fictional sample intake: a reporter mistook the store's official-brand claim for impersonation after receiving a shared catalogue link. The exercise identifies this as Astervale's own storefront, with ordinary catalogue and delivery information and no separate deceptive request in the supplied description. That authorized-page context clears the reported affiliation concern; matching the configured host alone is not a safety guarantee. No live ownership or website check occurred.",
+      "observed_at": "2025-02-20T20:00:00Z"
     },
     {
       "case_key": "demo-v2-replica-museum",
@@ -1116,7 +1208,8 @@
       "description": "Lumifern replica display models illustrate changes in industrial design at a fictional exhibition.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "This is an exhibition reference rather than a marketplace sale; clarify the submitter's concern."
+      "review_notes": "This is an exhibition reference rather than a marketplace sale; clarify the submitter's concern.",
+      "observed_at": "2025-02-21T08:00:00Z"
     },
     {
       "case_key": "demo-v2-catalogue-feed",
@@ -1128,7 +1221,8 @@
       "description": "Velora Works publishes product dimensions and colour names for catalogue readers.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-21T20:00:00Z"
     },
     {
       "case_key": "demo-v2-benign-otp-path",
@@ -1140,7 +1234,8 @@
       "description": "Northpetal help index explains authentication terminology without collecting visitor information.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-22T08:00:00Z"
     },
     {
       "case_key": "demo-v2-delayed-parcel",
@@ -1152,7 +1247,8 @@
       "description": "A customer reports an Astervale parcel arriving late and asks others about transit times.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "A delivery complaint alone does not establish fraud; the exercise lacks order or seller context."
+      "review_notes": "A delivery complaint alone does not establish fraud; the exercise lacks order or seller context.",
+      "observed_at": "2025-02-22T20:00:00Z"
     },
     {
       "case_key": "demo-v2-secondhand-lamp",
@@ -1164,7 +1260,8 @@
       "description": "Lumifern desk lamp offered second-hand with visible cosmetic wear and collection details.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-23T08:00:00Z"
     },
     {
       "case_key": "demo-v2-care-instructions",
@@ -1176,7 +1273,8 @@
       "description": "Velora Works cleaning instructions discuss water temperature and drying methods.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-23T20:00:00Z"
     },
     {
       "case_key": "demo-v2-empty-context-post",
@@ -1188,7 +1286,8 @@
       "description": "Northpetal product photograph is reposted with a short colour caption and no sale terms.",
       "review_status": "Reviewing",
       "review_verdict": "Inconclusive",
-      "review_notes": "The rules lack enough context to infer a violation; establish permission and commercial purpose."
+      "review_notes": "The rules lack enough context to infer a violation; establish permission and commercial purpose.",
+      "observed_at": "2025-02-24T08:00:00Z"
     },
     {
       "case_key": "demo-v2-benign-counterfeit-path",
@@ -1200,7 +1299,8 @@
       "description": "Astervale educational index links to consumer guidance and a reporting contact.",
       "review_status": "New",
       "review_verdict": "Pending review",
-      "review_notes": ""
+      "review_notes": "",
+      "observed_at": "2025-02-24T20:00:00Z"
     }
   ]
 }

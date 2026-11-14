@@ -80,13 +80,27 @@ Streamlit usage telemetry is disabled.
    notes. Save that state before **Escalated**. **False Positive** requires
    **No violation found** and notes. Reopening a case clears validation, so it must
    be validated again before escalation. Review decisions do not rewrite the
-   original preliminary assessment.
+   original preliminary assessment. New requires Pending review. Reviewing supports
+   Pending review, Inconclusive, or a provisional No violation found with supporting
+   notes. False Positive closes a cleared reported concern; a positive machine
+   detection is not required.
 4. **Evidence:** manually upload a PNG/JPEG screenshot. Check the source URL and
    timezone-aware observation time; the default is the case observation time.
    The app stores original bytes, upload time, filename, size and SHA-256 hash.
 5. **Dashboard & Reports:** see totals, awaiting review (New + Reviewing), validated
    cases (Validated + Escalated), false positives and category distribution.
    Independent report filters control CSV and Excel downloads.
+
+### Observation and storage times
+
+`observed_at` records when the reported observation occurred; `created_at` records
+when the case was added locally, and `updated_at` records its latest stored update.
+`Database.create_case(intake, observed_at="2025-01-06T15:00:00+07:00")` accepts an
+optional timezone-aware ISO 8601 observation time, normalizes it to UTC and rejects
+invalid/future values. Omitting it preserves the current UTC default. The existing
+intake form keeps that default; manual timestamp entry is deferred to Phase 2.
+Reviews leave observation/creation times intact. Existing SQLite columns are reused
+without a migration, reset or automatic timestamp correction.
 
 ## Load the 100-case sample dataset
 
@@ -102,20 +116,23 @@ records and exported intake text remain intact. Manual investigations are retain
 
 Sample content lives in **`datasets/sample_cases.json`**, separate from application
 logic so scenarios and fictional review metadata can be inspected without editing
-Python. The versioned JSON contains the same 100 records, with their original keys,
-inputs, notes, statuses and intended manual verdicts.
+Python. The versioned JSON contains the same 100 keys, observation text, statuses
+and intended manual verdicts. The [Phase 1 audit](docs/phase-1-audit.md) documents
+nine clarified fictional review rationales and fixed observation-time metadata.
 
 **`core/dataset_loader.py`** resolves the file relative to the project directory,
 independently of the terminal's working directory. Before inserting anything, it
 validates the entire file: structure/version, required string fields, unique keys,
 supported fictional brand/domain pairs, reserved `.example` URLs, sample
-status/verdict pairs and supporting review notes. Existing `Intake` and URL
-validation are reused. Missing files and invalid records produce readable errors
-without resetting SQLite or silently skipping bad records.
+status/verdict pairs, supporting review notes and optional `observed_at` timestamps.
+Existing `Intake`, URL and timestamp validation are reused. Missing files and invalid
+records produce readable errors without resetting SQLite or silently skipping bad records.
 
 The loader sends missing records through `Database.create_case()`, which runs the
 existing rule engine. Category and priority are not JSON inputs. Fictional review
 outcomes use `Database.update_review()`, including validation before escalation.
+All missing inserts and seeded reviews share one transaction; a runtime failure
+rolls back that import. Stable keys are checked under the same write lock.
 Existing sample keys are skipped, so manual and sample investigations coexist in
 the same SQLite database without overwriting notes, verdicts, evidence or timestamps.
 `core/demo.py` retains `load_demo()` as a small compatibility wrapper; Python fixture
@@ -125,6 +142,13 @@ All scenarios use four fictional brands—Astervale, Lumifern, Velora Works and
 Northpetal—and reserved `.example` domains. Sample review notes and completed
 verdicts describe **fictional investigation outcomes**. No screenshots are seeded
 and no evidence is claimed to have been collected automatically.
+
+All 100 bundled `observed_at` values are fictional fixture metadata, fixed at
+12-hour intervals from **2025-01-06 08:00 UTC to 2025-02-24 20:00 UTC**. They describe
+an exercise period, not live observations or an invented review history. Creation,
+update and validation times record local storage operations. Older JSON without
+observation timestamps remains supported. Already loaded cases keep their original
+notes and all timestamps; fixture corrections are not backfilled into user data.
 
 On a fresh load, the **unchanged rule engine** produces:
 
@@ -172,6 +196,12 @@ urgency on a host outside the configured official domain. Other configured risk
 signals receive Medium; remaining observations receive Low. No fixture forces a
 category or priority.
 
+`Other suspicious content` is the compatibility fallback when no more specific
+category matches, including observations without configured risk indicators.
+Categories and Low/Medium/High priorities guide review; human verdicts record
+separate decisions. Low does not establish legitimacy, and High does not establish
+a confirmed violation.
+
 ## Evidence, reports and local storage
 
 Screenshots are limited to **5 MiB, 20 megapixels and one still frame**. Pillow
@@ -205,7 +235,7 @@ core/evidence.py             Image validation, storage and SHA-256 metadata
 core/reporting.py            Formula-safe CSV and Excel reports
 core/dataset_loader.py       JSON validation and idempotent sample seeding
 core/demo.py                 Backward-compatible load_demo() wrapper
-datasets/sample_cases.json   All 100 unchanged sample inputs and fictional reviews
+datasets/sample_cases.json   100 fictional observations, timestamps and review metadata
 tests/                       Core, dataset migration, export and UI workflow tests
 .streamlit/config.toml       Dark theme, upload cap and telemetry settings
 ```
@@ -224,18 +254,21 @@ official dataset download was unavailable in the development environment.
 
 Executed on Linux with Python 3.12:
 
-- Pre-refactor baseline: **73 tests passed**.
-- Application/dataset regressions: **116 tests passed**, covering fresh/repeated loading,
-  upgrade from the original 12, record/evidence preservation, review transitions,
+- Phase 1 baseline: **156 tests passed**.
+- Updated `python -m pytest -q`: **219 passed, 0 failed, 0 skipped**, including
+  63 new Phase 1 regressions and the 40 unchanged Evaluation tests. Coverage includes
+  UTC conversion and timestamp ordering, supported review pairs, atomic rollback
+  after creation/review failures, safe retries and concurrent sample importers,
+  fresh/repeated loading, upgrade from the original 12, record/evidence preservation,
+  review transitions,
   JSON structure/field errors, duplicate keys, missing/malformed files, working
   directory independence, reserved domains, actual rule outputs, export provenance
   and UI presentation. Invalid records are rejected before any case is inserted.
   Existing URL, evidence hashing/validation and spreadsheet formula tests also pass.
-- Standalone evaluation adds 40 synthetic-fixture tests; the full
-  `python -m pytest -q` suite passes **156 tests** without an external dataset.
-- Compared all 100 JSON records and imported case contents against the original
-  Python fixtures: inputs, stable keys, notes, statuses, verdicts and computed
-  assessments match exactly. A regression checksum protects the extracted content.
+- Compared every sample's assessment inputs, stable key, status, verdict and
+  category/priority with the Phase 1 baseline. All remain unchanged. Nine rationale
+  corrections and 100 fictional observation dates are documented in the audit;
+  the fixture checksum was updated after verifying those exact differences.
 - `python -m pip check`: no broken requirements.
 - Streamlit startup and local HTTP health check succeeded using isolated data.
 - Chromium exercised sample loading twice, queue filters, direct review navigation,

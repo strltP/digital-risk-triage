@@ -2,6 +2,7 @@
 from collections import Counter, defaultdict
 import csv
 from dataclasses import replace
+from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
 from urllib.parse import urlsplit
 
@@ -164,3 +165,46 @@ def test_sample_provenance_in_csv_and_excel(db):
         assert next(row for row in rows if row['case_id'] == manual)['data_label'] == 'Investigator intake'
         assert all(row['evidence_references'] in ('', None) for row in samples)
     assert book['Evidence'].max_row == 1  # No fabricated evidence is seeded.
+
+
+def test_sample_observation_times_are_fixed_and_preserved(db):
+    scenarios = read_sample_cases()
+    start = datetime(2025, 1, 6, 8, tzinfo=timezone.utc)
+    expected = {case.key: (start + timedelta(hours=12 * index)).isoformat()
+                for index, case in enumerate(scenarios)}
+    assert {case.key: case.observed_at for case in scenarios} == expected
+    assert load_sample_dataset(db) == 100
+    for case in db.list_cases():
+        assert case['observed_at'] == expected[case['demo_key']]
+        assert datetime.fromisoformat(case['observed_at']) <= datetime.fromisoformat(case['created_at'])
+        assert case['created_at'] <= case['updated_at']
+    snapshot = db.list_cases()
+    assert load_sample_dataset(db) == 0
+    assert Database(db.path).list_cases() == snapshot
+
+
+def test_timestamp_fields_survive_csv_and_excel_exports(db):
+    load_sample_dataset(db)
+    rows = list(csv.DictReader(StringIO(export_csv(db).decode('utf-8-sig'))))
+    book = load_workbook(BytesIO(export_excel(db)))
+    cells = list(book['Cases'].values)
+    excel = {row[0]: dict(zip(cells[0], row)) for row in cells[1:]}
+    for row in rows:
+        stored = db.get_case(row['case_id'])
+        for field in ('observed_at', 'created_at', 'updated_at', 'validated_at'):
+            assert row[field] == (stored[field] or '')
+            assert excel[row['case_id']][field] == stored[field]
+
+
+def test_cleared_low_priority_reports_have_explicit_fictional_context():
+    records = {case.key: case for case in read_sample_cases()}
+    for key in ('demo-v2-authorized-official-store', 'demo-v2-official-size-guide'):
+        case = records[key]
+        result = assess(case.intake)
+        assert result.category == 'Other suspicious content' and result.priority == 'Low'
+        assert case.status == 'False Positive' and case.verdict == 'No violation found'
+        notes = case.intake.notes.casefold()
+        # Dataset content, not UI copy: a cleared report needs an intake motive,
+        # scoped fictional context, and transparent limits on verification.
+        assert 'reporter' in notes and 'exercise' in notes and 'concern' in notes
+        assert 'no live' in notes
