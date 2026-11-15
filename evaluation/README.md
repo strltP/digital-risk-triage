@@ -27,21 +27,63 @@ similarity values and numerical webpage features are not inputs. There is no
 URL-plus-title experiment in this implementation. Missing fields are not invented.
 The adapter validates the header and labels rather than guessing a different schema.
 
-**Real-data execution remains blocked as of 14 November 2026.** The official UCI
-page was rechecked: it lists the original CSV (54.2 MB), 235,795 instances and the
-label mapping above. The Cloud workspace's outbound proxy rejected CONNECT to
-`archive.ics.uci.edu` with HTTP 403 (`curl` exit 56); no dataset bytes were received.
-Both the official ZIP and metadata API requests were blocked. A separate web
-reader could read the landing page, but its download reader rejected the ZIP
-because it exceeds its 4 MiB response limit.
+**The full benchmark succeeded on Windows on 15 November 2026**, using the original
+locally supplied PhiUSIIL CSV. The earlier Cloud acquisition attempt on 14 November
+failed at the outbound proxy's CONNECT step with HTTP 403; that historical failure
+does not describe the later local execution. See the
+[Phase 3 review](../docs/phase-3-review.md) for the separate acquisition and execution records.
 
-The original CSV header, preprocessing counts and adapter compatibility with the
-raw release therefore remain **unverified**. `URL`/`label` are the adapter's required
-schema, supported by the published metadata; this is not an inspection of the
-original file. No real benchmark or replacement third-party dataset was used.
-Tests use clearly synthetic reserved-domain fixtures only; their metrics are not
-published as real results. See the [Phase 3 review](../docs/phase-3-review.md) for
-the acquisition record and audit findings.
+## Verified full-dataset results — 15 November 2026
+
+Committed artifacts: [full report](../docs/benchmarks/phiusiil-full-2026-11-15.md),
+[JSON metadata and metrics](../docs/benchmarks/phiusiil-full-2026-11-15.json), and
+[confusion matrices](../docs/benchmarks/phiusiil-full-2026-11-15.md#confusion-matrices).
+These artifacts are the source of the figures below; publication checks compare
+their counts and metrics rather than rerunning the raw dataset in Cloud.
+
+| Preprocessing | Records |
+|---|---:|
+| Original | 235,795 |
+| Empty URLs | 0 |
+| Invalid URLs | 4 |
+| Duplicate rows removed | 897 |
+| Conflicting-label rows removed (one group) | 2 |
+| Evaluated, unique usable records | 234,892 |
+| Evaluated phishing | 100,043 |
+| Evaluated legitimate | 134,849 |
+
+This is **full mode**, not the default balanced 1,000-record sample. All cleaned
+records were evaluated; the recorded seed of **42** is unused in full mode.
+
+| Protocol | TP | FP | TN | FN | Precision | Recall | F1 | Specificity | FPR |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A: `assessment` | 0 | 0 | 134,849 | 100,043 | Undefined* | 0.00% | 0.00% | 100.00% | 0.00% |
+| B: `url-screening` | 6,496 | 227 | 134,622 | 93,547 | 96.62% | 6.49% | 12.17% | 99.83% | 0.17% |
+
+*Protocol A has no positive predictions: precision is stored as `0.0` and listed
+in `undefined_metrics`. Its zero recall/F1 reflect missing title/description inputs,
+and its metrics match the always-legitimate baseline.
+
+Protocol B's **96.62% precision** applies to flags on this dataset; its **6.49%
+recall** means **93,547 of 100,043 phishing URLs (93.51%) were unflagged**. All 227
+false positives had the many-subdomain-levels indicator. All 93,547 false negatives
+had no configured URL indicators. These aggregate patterns do not establish
+ownership, intent, safety or the accuracy of the complete investigation workflow.
+No rules were tuned on these results.
+
+Recorded execution metadata:
+
+- Clean source commit: [`53e831049800c7563a722482c645ff77f9744e07`](https://github.com/strltP/digital-risk-triage/commit/53e831049800c7563a722482c645ff77f9744e07).
+- Windows execution on 15 November 2026; JSON timestamp: `2026-11-15T07:02:39.689872+00:00`.
+- Python **3.11.9**, RapidFuzz **3.14.6**, tldextract **5.4.0**.
+- CSV SHA-256: `a236549cd369cd80bd478ff8e1779cbf44c58d5c3f79f7a51a1adbed7d06d1c6`.
+- Ordered selection SHA-256: `9b83bfaefd3f5fa057bcddd4a0e60aeaf51f15ec5bb3e49460a53e39c1461752`.
+
+The successful run validates adapter use with this locally supplied CSV. Preserve
+the report's provenance qualification: its origin is not independently
+authenticated by the evaluator. The raw CSV is not committed; its fingerprint
+above is taken from the benchmark metadata. Unit tests still use synthetic
+reserved-domain fixtures and are separate from these real-data results.
 
 ## Run
 
@@ -56,10 +98,11 @@ protocols. `--sample-size` supports other positive even totals while retaining e
 class balance. Insufficient examples in either class cause an explicit error;
 the command does not shrink or rebalance the requested sample.
 
-Evaluate every cleaned record, retaining the dataset's class balance:
+Reproduce the published full run with the recorded source commit, versions and CSV
+fingerprint, retaining the cleaned dataset's class balance:
 
 ```bash
-python -m evaluation.evaluate --dataset evaluation/data/PhiUSIIL_Phishing_URL_Dataset.csv --full --output evaluation/results/phiusiil-full
+python -m evaluation.evaluate --dataset evaluation/data/PhiUSIIL_Phishing_URL_Dataset.csv --full --seed 42 --protocol both --output evaluation/results/phiusiil-full
 ```
 
 `--full` and `--sample-size` are mutually exclusive. `--protocol assessment` or

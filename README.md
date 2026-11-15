@@ -249,26 +249,62 @@ Phishing classification depends on credential/verification/urgency text that thi
 URL-only benchmark does not supply. Rules were not changed to improve scores.
 Brand/domain similarity also needs context that neither protocol receives.
 
-**No real benchmark results are available.** On 14 November 2026, the workspace
-proxy blocked the official UCI download at CONNECT with HTTP 403, before any CSV
-bytes were received. The original header, cleaned counts and original-release
-adapter compatibility remain unverified. Published UCI metadata and label direction
-were checked; synthetic unit fixtures are not presented as real benchmarks.
-See the [Phase 3 audit and acquisition record](docs/phase-3-review.md).
+**The full PhiUSIIL benchmark ran successfully on Windows on 15 November 2026**
+using the original locally supplied CSV and clean source commit
+[`53e8310`](https://github.com/strltP/digital-risk-triage/commit/53e831049800c7563a722482c645ff77f9744e07).
+Of **235,795** original records, preprocessing excluded **4** invalid URLs,
+**897** duplicate rows and **2** conflicting-label rows, leaving **234,892**
+unique usable records: **100,043 phishing** and **134,849 legitimate**.
+This run used the entire cleaned dataset, retaining its class distribution;
+it was not a balanced sample.
 
-After obtaining the original CSV locally:
+| Protocol | TP | FP | TN | FN | Precision | Recall | F1 | FPR |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| A: `assessment` | 0 | 0 | 134,849 | 100,043 | Undefined* | 0.00% | 0.00% | 0.00% |
+| B: `url-screening` | 6,496 | 227 | 134,622 | 93,547 | 96.62% | 6.49% | 12.17% | 0.17% |
 
-```bash
-python -m evaluation.evaluate --dataset evaluation/data/PhiUSIIL_Phishing_URL_Dataset.csv --sample-size 1000 --seed 42 --protocol both --output evaluation/results/phiusiil-1000
+*Protocol A makes no positive predictions. Precision is undefined and represented
+as `0.0` with an explicit `undefined_metrics` entry in the JSON.
+
+URL screening has high precision **on this dataset**, but very low recall:
+**93,547 of 100,043 phishing URLs (93.51%) remain unflagged**. Its structural flags
+identify only a small subset of labeled phishing URLs; absence of a flag does not
+establish safety. Protocol A lacks the text inputs required by the existing phishing
+rules and matches the always-legitimate baseline. These results are not the overall
+accuracy of the investigation application.
+
+See the committed [full report](docs/benchmarks/phiusiil-full-2026-11-15.md),
+[authoritative JSON](docs/benchmarks/phiusiil-full-2026-11-15.json) and
+[confusion matrices](docs/benchmarks/phiusiil-full-2026-11-15.md#confusion-matrices).
+The dataset is attributed to **Arvind Prasad and Shalini Chandra (2024), UCI Machine
+Learning Repository**, under **CC BY 4.0**; official labels are `0 = phishing`,
+`1 = legitimate`. The CSV SHA-256 recorded in the benchmark metadata is:
+
+```text
+a236549cd369cd80bd478ff8e1779cbf44c58d5c3f79f7a51a1adbed7d06d1c6
 ```
 
-This requests 500 unique usable records per class. Reports include input/selection
-fingerprints, code/environment provenance, exclusions, separate metrics, baselines,
-confusion matrices and hash-only error examples. Dataset URLs are never visited or
-published. See [evaluation instructions](evaluation/README.md) for full mode and schema.
+The report records Python **3.11.9**, RapidFuzz **3.14.6**, tldextract **5.4.0** and
+a clean working tree. Its provenance note remains explicit: the CSV was locally
+supplied and its origin was not independently authenticated by the evaluator.
+The Cloud download failure on 14 November is historical; it does not describe the
+later Windows run. See the [acquisition history](docs/phase-3-review.md).
 
-Balanced sampling changes prevalence, so precision may differ from operational
-traffic. Accuracy alone can conceal zero recall. Undefined ratios are explicitly
+To reproduce the full run with the same CSV and source commit:
+
+```bash
+python -m evaluation.evaluate --dataset evaluation/data/PhiUSIIL_Phishing_URL_Dataset.csv --full --seed 42 --protocol both --output evaluation/results/phiusiil-full
+```
+
+Full mode ignores the seed and retains every cleaned record. Reports include
+input/selection fingerprints, code/environment provenance, exclusions, separate
+metrics, baselines, confusion matrices and hash-only error examples. The raw CSV
+and full phishing URLs are not committed. See [evaluation instructions](evaluation/README.md)
+for schema, balanced sampling and reproducibility details.
+
+The optional balanced sampling mode changes prevalence; the published full run
+retains the cleaned class distribution. Dataset precision may still differ from
+operational traffic. Accuracy alone can conceal zero recall. Undefined ratios are explicitly
 listed and represented as zero, rather than claimed as measured precision. A URL
 indicator is not a fraud probability; High priority does not establish wrongdoing.
 This experiment does not measure counterfeit/trademark accuracy, platform-wide
@@ -299,7 +335,8 @@ navigation, timestamp saving/rejection, review rules, PNG upload/preview, scoped
 CSV/Excel downloads and server restart. Bytes/hashes and 102 pre-existing test
 records were preserved. Phase 3 leaves the application, core rules, sample JSON,
 theme and those screenshots unchanged; it does not claim a repeated browser suite.
-Native Windows execution remains unverified.
+The offline full benchmark was subsequently executed on Windows / Python 3.11.9;
+Windows application UI execution remains unverified.
 
 ## Run locally on Windows and in Visual Studio Code
 
