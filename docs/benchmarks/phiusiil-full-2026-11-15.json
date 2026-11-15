@@ -1,0 +1,330 @@
+{
+  "report_version": "1.1",
+  "evaluation_timestamp": "2026-11-15T07:02:39.689872+00:00",
+  "dataset": {
+    "name": "PhiUSIIL Phishing URL (Website)",
+    "source": "https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+dataset",
+    "license": "CC BY 4.0",
+    "attribution": "Arvind Prasad and Shalini Chandra (2024), UCI Machine Learning Repository",
+    "label_convention": {
+      "0": "phishing",
+      "1": "legitimate"
+    },
+    "sha256": "a236549cd369cd80bd478ff8e1779cbf44c58d5c3f79f7a51a1adbed7d06d1c6",
+    "provenance": "Locally supplied CSV; its origin is not independently authenticated."
+  },
+  "inputs_used": {
+    "source_type": "Website",
+    "url": "original URL column, trimmed",
+    "brand": "",
+    "official_domain": "",
+    "title": "",
+    "description": ""
+  },
+  "preprocessing": {
+    "original_rows": 235795,
+    "empty_urls": 0,
+    "invalid_urls": 4,
+    "removed_duplicate_rows": 897,
+    "conflicting_url_groups": 1,
+    "conflicting_rows": 2,
+    "invalid_rows": 4,
+    "valid_rows": 235791,
+    "cleaned_rows": 234892,
+    "original_class_distribution": {
+      "phishing": 100945,
+      "legitimate": 134850
+    },
+    "cleaned_class_distribution": {
+      "phishing": 100043,
+      "legitimate": 134849
+    }
+  },
+  "sampling": {
+    "requested_sample_size": null,
+    "full_dataset": true,
+    "random_seed": 42,
+    "evaluated_records": 234892,
+    "class_distribution": {
+      "phishing": 100043,
+      "legitimate": 134849
+    },
+    "selection_sha256": "9b83bfaefd3f5fa057bcddd4a0e60aeaf51f15ec5bb3e49460a53e39c1461752"
+  },
+  "source_code": {
+    "git_commit": "53e831049800c7563a722482c645ff77f9744e07",
+    "working_tree_dirty": false,
+    "python": "3.11.9",
+    "dependencies": {
+      "RapidFuzz": "3.14.6",
+      "tldextract": "5.4.0"
+    }
+  },
+  "protocols": {
+    "assessment": {
+      "purpose": "Limited-input diagnostic; not a phishing detection benchmark with sufficient inputs.",
+      "positive_definition": "category == Potential phishing",
+      "metrics": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 134849,
+        "fn": 100043,
+        "accuracy": 0.5740893687311616,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "specificity": 1.0,
+        "false_positive_rate": 0.0,
+        "undefined_metrics": [
+          "precision"
+        ],
+        "confusion_matrix": {
+          "labels": [
+            "legitimate",
+            "phishing"
+          ],
+          "rows": "actual",
+          "columns": "predicted",
+          "values": [
+            [
+              134849,
+              0
+            ],
+            [
+              100043,
+              0
+            ]
+          ]
+        }
+      },
+      "error_analysis": {
+        "false_positives": {
+          "count": 0,
+          "without_url_indicators": 0,
+          "indicator_counts": {},
+          "examples": []
+        },
+        "false_negatives": {
+          "count": 100043,
+          "without_url_indicators": 93547,
+          "indicator_counts": {
+            "Host is an IP address rather than a domain name.": 604,
+            "Hostname has unusually many subdomain levels.": 4925,
+            "Hostname uses punycode/Unicode; visually inspect for lookalike characters.": 150,
+            "URL contains login information before @, which can obscure the actual host.": 10,
+            "URL embeds another URL in its path or query; inspect the destination manually.": 684,
+            "URL is unusually long (over 200 characters).": 1423
+          },
+          "examples": [
+            {
+              "url_sha256": "a127bba6ffc0a5c837d384184161c32465a0326b1a4984554b5a4d6a3e2d23d1",
+              "csv_record_index": 130057,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "420be82a2f099d69b647f8d62b8b297eb03ef6fa2c5b3aa55b61eadda414809f",
+              "csv_record_index": 197455,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "85e78dec3ea8fe21f7ddd54f9f88dc45de037875d4de5d1b8f9c187d8aaaabe3",
+              "csv_record_index": 118152,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "8e8b034b4459c38358505cd9cc60b8cd0328c66da161018ac6e2cb8c622353b1",
+              "csv_record_index": 64189,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "318a6349e0ccca2b07819a11f788685593c0d075f5270f9d1659b40738da67bd",
+              "csv_record_index": 194537,
+              "indicator_count": 0
+            }
+          ]
+        }
+      }
+    },
+    "url-screening": {
+      "purpose": "Structural URL review flags compared with dataset labels; not confirmed phishing findings.",
+      "positive_definition": "one or more passive URL indicators",
+      "metrics": {
+        "tp": 6496,
+        "fp": 227,
+        "tn": 134622,
+        "fn": 93547,
+        "accuracy": 0.6007782299950616,
+        "precision": 0.9662353116168377,
+        "recall": 0.06493207920594145,
+        "f1": 0.12168667927992058,
+        "specificity": 0.9983166356443133,
+        "false_positive_rate": 0.001683364355686731,
+        "undefined_metrics": [],
+        "confusion_matrix": {
+          "labels": [
+            "legitimate",
+            "phishing"
+          ],
+          "rows": "actual",
+          "columns": "predicted",
+          "values": [
+            [
+              134622,
+              227
+            ],
+            [
+              93547,
+              6496
+            ]
+          ]
+        }
+      },
+      "error_analysis": {
+        "false_positives": {
+          "count": 227,
+          "without_url_indicators": 0,
+          "indicator_counts": {
+            "Hostname has unusually many subdomain levels.": 227
+          },
+          "examples": [
+            {
+              "url_sha256": "22cadfc288c1e960fb63b2d7d116ff13c29974e6d962aed73e85b8555bbabd7b",
+              "csv_record_index": 192207,
+              "indicator_count": 1
+            },
+            {
+              "url_sha256": "5cd57e452e329620dba4b6fdeaaafe1a37c69b03b4e2a6e66bb315659e045cd4",
+              "csv_record_index": 89198,
+              "indicator_count": 1
+            },
+            {
+              "url_sha256": "9e1544e7d71c8e2f12d286e3f6672c7847922904ddc7caadb5c4a11043749604",
+              "csv_record_index": 157702,
+              "indicator_count": 1
+            },
+            {
+              "url_sha256": "184862c5ce9cb1cc33a4c03c0e324ab42e61cdf972961d308a2cfd626de76778",
+              "csv_record_index": 21221,
+              "indicator_count": 1
+            },
+            {
+              "url_sha256": "cb85cfeec752e48e6d72741b090c5b9ed9d26ee23825b64d34ce7428851c71ac",
+              "csv_record_index": 60457,
+              "indicator_count": 1
+            }
+          ]
+        },
+        "false_negatives": {
+          "count": 93547,
+          "without_url_indicators": 93547,
+          "indicator_counts": {},
+          "examples": [
+            {
+              "url_sha256": "a127bba6ffc0a5c837d384184161c32465a0326b1a4984554b5a4d6a3e2d23d1",
+              "csv_record_index": 130057,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "420be82a2f099d69b647f8d62b8b297eb03ef6fa2c5b3aa55b61eadda414809f",
+              "csv_record_index": 197455,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "85e78dec3ea8fe21f7ddd54f9f88dc45de037875d4de5d1b8f9c187d8aaaabe3",
+              "csv_record_index": 118152,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "8e8b034b4459c38358505cd9cc60b8cd0328c66da161018ac6e2cb8c622353b1",
+              "csv_record_index": 64189,
+              "indicator_count": 0
+            },
+            {
+              "url_sha256": "318a6349e0ccca2b07819a11f788685593c0d075f5270f9d1659b40738da67bd",
+              "csv_record_index": 194537,
+              "indicator_count": 0
+            }
+          ]
+        }
+      }
+    }
+  },
+  "interpretation": [
+    "Protocol A is a limited-input diagnostic: with empty title/description and no brand context, the current rules always predict negative.",
+    "Protocol B measures passive URL screening; a review flag is not a verified phishing classification.",
+    "No title, description, official brand domain, label-derived content or numerical dataset feature enters either detector.",
+    "Brand context is absent, so domain similarity checks are unavailable. RapidFuzz similarity is not phishing probability.",
+    "High, Medium and Low are review priorities, not probabilities. URL indicators do not prove phishing or safety.",
+    "Undefined metric ratios are reported as 0.0 and named explicitly in undefined_metrics.",
+    "Dataset labels do not evaluate counterfeit, trademark misuse, human review, evidence handling or the full investigation workflow.",
+    "Balanced sampling changes class prevalence; these precision and accuracy values need not represent operational traffic.",
+    "Accuracy alone is insufficient. There is no training split; related domains and near-duplicate URLs can remain after exact-key deduplication.",
+    "These are descriptive results on a fixed labeled dataset, not deployment guarantees or a model-training experiment."
+  ],
+  "baselines": {
+    "always-legitimate": {
+      "tp": 0,
+      "fp": 0,
+      "tn": 134849,
+      "fn": 100043,
+      "accuracy": 0.5740893687311616,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "specificity": 1.0,
+      "false_positive_rate": 0.0,
+      "undefined_metrics": [
+        "precision"
+      ],
+      "confusion_matrix": {
+        "labels": [
+          "legitimate",
+          "phishing"
+        ],
+        "rows": "actual",
+        "columns": "predicted",
+        "values": [
+          [
+            134849,
+            0
+          ],
+          [
+            100043,
+            0
+          ]
+        ]
+      }
+    },
+    "always-phishing": {
+      "tp": 100043,
+      "fp": 134849,
+      "tn": 0,
+      "fn": 0,
+      "accuracy": 0.42591063126883844,
+      "precision": 0.42591063126883844,
+      "recall": 1.0,
+      "f1": 0.5973875528087539,
+      "specificity": 0.0,
+      "false_positive_rate": 1.0,
+      "undefined_metrics": [],
+      "confusion_matrix": {
+        "labels": [
+          "legitimate",
+          "phishing"
+        ],
+        "rows": "actual",
+        "columns": "predicted",
+        "values": [
+          [
+            0,
+            134849
+          ],
+          [
+            0,
+            100043
+          ]
+        ]
+      }
+    }
+  }
+}
